@@ -158,7 +158,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 /* ---------- ① 프로필 폼 ---------- */
 function formHTML(px) {
   const sel = (k, list) => `<select id="${px}-${k}">${list.map(o => `<option>${o}</option>`).join('')}</select>`;
-  return `<div class="fields">
+  return `<div class="fs fs-basic"><div class="fields">
     <label>이름<input id="${px}-name" maxlength="10"></label>
     <label>성별${sel('gender', OPT.gender)}</label>
     <label>나이<input type="number" id="${px}-age" min="19" max="70"></label>
@@ -170,15 +170,15 @@ function formHTML(px) {
     <label>외모 스타일${sel('style', OPT.style)}</label>
     <label>연봉(만원)<input type="number" id="${px}-income" step="100" min="0"></label>
     <label>MBTI <span class="small">(모르면 '모름' → 질문으로 추정)</span>${sel('mbti', OPT.mbti)}</label>
-  </div>
-  <div class="lbl">관심사</div>
+  </div></div>
+  <div class="fs fs-like"><div class="lbl">관심사</div>
   <div class="chips" id="${px}-interests">${OPT.interests.map(i => `<label class="chip"><input type="checkbox" value="${i}"><span>${i}</span></label>`).join('')}</div>
-  <label class="full">한줄 소개<input id="${px}-intro" maxlength="40"></label>
-  <details class="qs" open><summary>성향 질문 10개 — 더 가까운 쪽을 고르세요</summary>
+  <label class="full">한줄 소개<input id="${px}-intro" maxlength="40"></label></div>
+  <div class="fs fs-q"><details class="qs" open><summary>성향 질문 10개 — 더 가까운 쪽을 고르세요</summary>
     ${QUESTIONS.map((q, i) => `<div class="qrow"><div class="qt">${i + 1}. ${q.q}</div><div class="chips">
       <label class="chip"><input type="radio" name="${px}-q${i}" value="A"><span>${q.a}</span></label>
       <label class="chip"><input type="radio" name="${px}-q${i}" value="B"><span>${q.b}</span></label></div></div>`).join('')}
-  </details>
+  </details></div>
   ${px === 'me' ? '' : `
   <div class="lbl" style="margin-top:14px">친구가 원하는 상대 <span class="small">(쌍방 매칭: 상대도 나를 좋아할지 계산)</span></div>
   <div class="fields">

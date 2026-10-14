@@ -4,53 +4,55 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>소개팅 매칭 로직</title>
-<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="common.css?v=7">
 </head>
 <body>
-<header>
-  <div class="topline">
-    <h1>가장 잘 맞는 상대를 찾아줍니다</h1>
-    <button id="openFriend" class="topbtn" title="친구 프로필을 별도 창에서 입력해요">친구 프로필 대신 올리기 ↗ <span id="friendCnt" class="fc"></span></button>
-  </div>
-  <p>소개팅 앱이 아니라 <b>매칭 로직</b>입니다. 조건 + <b>MBTI·성향 질문</b>으로 점수를 매기고, 추천 상대와 그 상대를 고른 <b>내 로직</b>이 화면에 나옵니다.</p>
-  <nav class="flow">
-    <a href="#s1">① 내 프로필 올리기</a><span>→ 하나씩 비교 →</span>
-    <a href="#s1">프로필 저장소</a><span>→ 점수 순으로 →</span>
-    <a href="#s3">③ 추천 + 로직 설명</a>
-  </nav>
+<div class="topbar"><div class="tb-in">
+  <a class="brand" href="#top">💘 매칭 로직</a>
+  <nav class="steps"><a href="#s1"><i>1</i>올린다</a><a href="#s2"><i>2</i>내 로직</a><a href="#s3"><i>3</i>추천</a></nav>
+  <button id="openFriend" class="topbtn" title="친구 프로필을 별도 창에서 입력해요">친구 대신 올리기 ↗ <span id="friendCnt" class="fc"></span></button>
+</div></div>
+
+<header id="top" class="hero">
+  <div class="eyebrow">바이브코딩 실습 4 · 소개팅 매칭</div>
+  <h1>가장 잘 맞는 상대를 찾아줍니다</h1>
+  <p>소개팅 앱이 아니라 <b>매칭 로직</b>입니다. 조건과 MBTI·성향으로 점수를 매기고, 추천 상대와 그 사람을 고른 <b>내 로직</b>을 화면에 보여줍니다.</p>
 </header>
 
 <main>
 <!-- ① 올린다 -->
 <section id="s1">
-  <h2><span class="num">1</span>올린다</h2>
-  <p class="muted small" style="margin-top:-6px">받는 칸: 이름·성별·나이·키·지역·종교·흡연·음주·외모 스타일·연봉·MBTI·관심사·한줄 소개 + 성향 질문 10개</p>
-  <div class="grid">
-    <div class="card hl"><h3>내 프로필</h3><div id="meForm"></div><div id="myType" class="mytype"></div></div>
-    <div class="card deckwrap" style="align-self:start">
+  <div class="sec-head"><h2><span class="num">1</span>올린다</h2><p>내 프로필을 바꾸면 오른쪽 소개 카드가 바로 바뀌어요</p></div>
+  <div class="s1grid">
+    <div class="card hl">
+      <div class="card-head"><h3>내 프로필</h3>
+        <div class="tabs" id="meTabs"><button data-tab="basic" class="on">기본 정보</button><button data-tab="like">관심사·소개</button><button data-tab="q">성향 질문</button></div>
+      </div>
+      <div id="meForm" class="tabbed" data-show="basic"></div>
+      <div id="myType" class="mytype"></div>
+    </div>
+    <div class="card deckwrap">
       <div class="row" style="justify-content:space-between"><h3 style="margin:0">💘 오늘의 소개</h3><span id="deckLeft" class="small muted"></span></div>
-      <p class="small muted" style="margin:4px 0 10px">내 로직 순위대로 한 명씩 보여줘요. ♥를 누르면 상대도 나를 좋아하는지 확인해요.</p>
+      <p class="small muted" style="margin:4px 0 12px">내 로직 순위대로 한 명씩 보여줘요. ♥를 누르면 상대도 나를 좋아하는지 확인해요.</p>
       <div id="deck"></div>
     </div>
   </div>
-  <div class="card" style="margin-top:16px">
-    <div class="row" style="justify-content:space-between">
-      <h3 style="margin:0">프로필 저장소 <span id="cnt" class="muted"></span></h3>
-      <div class="row">
-        <button class="ghost" id="addMeBtn" title="나 자신이 추천에서 빠지는지 확인용">내 프로필도 저장소에 넣어보기</button>
-        <button class="ghost" id="resetBtn">가상 프로필로 초기화</button>
-      </div>
+  <details class="card fold">
+    <summary><h3>프로필 저장소 <span id="cnt" class="muted"></span></h3></summary>
+    <div class="row" style="margin-top:12px">
+      <button class="ghost" id="addMeBtn" title="나 자신이 추천에서 빠지는지 확인용">내 프로필도 저장소에 넣어보기</button>
+      <button class="ghost" id="resetBtn">가상 프로필로 초기화</button>
     </div>
     <div id="store" class="store"></div>
-  </div>
+  </details>
 </section>
 
 <!-- ② 내 로직 -->
 <section id="s2">
-  <h2><span class="num">2</span>내 로직을 만든다</h2>
-  <div class="grid" id="logic">
-    <div class="card">
-      <h3>① 거르기 — 절대 안 되는 조건은?</h3>
+  <div class="sec-head"><h2><span class="num">2</span>내 로직을 만든다</h2><p>숫자를 바꾸면 추천 결과가 바로 바뀌어요</p></div>
+  <div class="logicgrid" id="logic">
+    <div class="card a-filter">
+      <h3>① 거르기 <span class="muted small">절대 안 되는 조건</span></h3>
       <div class="rule"><span>원하는 성별</span><select data-s="wantGender" style="width:110px"><option>여</option><option>남</option><option>상관없음</option></select></div>
       <div class="rule"><span>나이 범위</span><span><input class="sm" type="number" data-s="ageMin"> ~ <input class="sm" type="number" data-s="ageMax"> 세</span></div>
       <div class="rule"><span>최소 키 <span class="muted small">(0 = 상관없음)</span></span><span><input class="sm" type="number" data-s="minHeight"> cm</span></div>
@@ -59,8 +61,8 @@
       <div class="rule"><span>나 자신은 추천하지 않음</span><input type="checkbox" checked disabled></div>
     </div>
 
-    <div class="card">
-      <h3>② 점수 — 무엇이 같으면 몇 점?</h3>
+    <div class="card a-score">
+      <h3>② 점수 <span class="muted small">무엇이 같으면 몇 점?</span></h3>
       <table>
         <tr><th>항목</th><th>기준</th><th style="text-align:right">점수</th></tr>
         <tr><td>관심사</td><td>겹치는 관심사 1개당<br><span class="small muted">최대 <input class="sm" type="number" data-w="interestMax" min="1"> 개까지</span></td><td class="pt"><input class="sm" type="number" data-w="interest"></td></tr>
@@ -77,50 +79,54 @@
       <div class="total">만점 <span id="maxScore"></span>점</div>
     </div>
 
-    <div class="card">
-      <h3>③ 이유 — 왜 이 사람이 1위인가?</h3>
+    <div class="card a-reason">
+      <h3>③ 이유 <span class="muted small">왜 이 사람이 1위인가?</span></h3>
       <div class="rule"><span>순위 기준</span><select data-s="rankBy" style="width:auto">
         <option value="mutual">서로 맞는 정도 (쌍방)</option><option value="mine">내 점수만</option></select></div>
       <div class="rule"><span>매칭 성사 기준<br><span class="small muted">상대가 나를 보는 점수</span></span><span><input class="sm" type="number" data-s="matchCut"> % 이상</span></div>
-      <p class="small muted">상대가 나를 보는 점수(100점): 상대가 원하는 나이 안 30 · 흡연 조건 OK 20 · 관심사 겹침 30 · MBTI 궁합 20</p>
-      <p class="small" style="margin-top:0">통과한 사람마다 ② 점수표로 점수를 매기고, <b>순위 기준이 높은 순</b>으로 줄 세웁니다. 1위는 다음 세 가지를 화면에 말합니다.</p>
-      <ul class="small" style="padding-left:18px">
+      <p class="small muted">상대가 나를 보는 점수(100점) = 상대가 원하는 나이 30 · 흡연 조건 20 · 관심사 30 · MBTI 궁합 20</p>
+      <div class="lbl">1위가 화면에 말하는 것</div>
+      <ul class="small" style="padding-left:18px;margin:0">
         <li>어디서 몇 점을 받았는지</li>
         <li>2위보다 앞선 <b>결정적 차이</b></li>
         <li>아쉬운 점 (0점 받은 항목)</li>
       </ul>
-      <div class="lbl">동점일 때 규칙</div>
-      <ol class="tie">
+      <div class="lbl">동점일 때</div>
+      <ol class="tie" style="margin:0">
         <li>겹치는 관심사가 더 많은 사람</li>
         <li>나이 차가 더 적은 사람</li>
         <li>그래도 같으면 이름 가나다순</li>
       </ol>
-      <p class="small muted">모든 숫자는 바꾸면 바로 결과에 반영됩니다. 21명이면 21개의 로직, 무엇을 중요하게 보느냐가 핵심입니다.</p>
     </div>
   </div>
-  <div class="card" style="margin-top:16px">
-    <h3>MBTI 궁합표 <span class="small muted" id="chartMe"></span></h3>
-    <div class="row small" id="chartLegend" style="margin-bottom:8px"></div>
+  <details class="card fold">
+    <summary><h3>MBTI 궁합표 <span class="small muted" id="chartMe"></span></h3></summary>
+    <div class="row small" id="chartLegend" style="margin:12px 0 8px"></div>
     <div style="overflow-x:auto"><table class="mchart" id="mbtiChart"></table></div>
-    <p class="small muted" style="margin-bottom:0">국내 커뮤니티에서 널리 공유되는 MBTI 궁합표(원본 출처 불명)를 숫자로 옮긴 것입니다. 재미용 기준이고 과학적 근거는 없어요.
-      내 MBTI 줄이 강조되어 있어요.</p>
-  </div>
+    <p class="small muted" style="margin-bottom:0">국내 커뮤니티에서 널리 공유되는 MBTI 궁합표(원본 출처 불명)를 숫자로 옮긴 것입니다. 재미용 기준이고 과학적 근거는 없어요. 내 MBTI 줄이 강조되어 있어요.</p>
+  </details>
 </section>
 
 <!-- ③ 추천하고, 보여준다 -->
 <section id="s3">
-  <h2><span class="num">3</span>추천하고, 보여준다</h2>
+  <div class="sec-head"><h2><span class="num">3</span>추천하고, 보여준다</h2><p>1위의 이유를 화면이 말해줍니다</p></div>
   <div id="result"></div>
 </section>
 </main>
 <footer>바이브코딩 · 소개팅 매칭 실습 4 — 데이터는 이 브라우저에만 저장됩니다</footer>
 
-<script src="common.js"></script>
+<script src="common.js?v=7"></script>
 <script>
 $('meForm').innerHTML = formHTML('me');
 fillForm('me', st.me);
 
 $('meForm').addEventListener('input', () => { st.me = readForm('me'); save(); render(); });
+$('meTabs').addEventListener('click', e => {
+  const t = e.target.dataset.tab;
+  if (!t) return;
+  $('meForm').dataset.show = t;
+  [...$('meTabs').children].forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+});
 
 // 친구 등록은 별도 창(friend.html). 그 창이 저장하면 여기서 다시 읽어 갱신한다
 $('openFriend').onclick = () => window.open('friend.html', 'friend', 'width=620,height=900');
@@ -399,7 +405,8 @@ function render() {
     // 좋아요 → 매칭 성사 / 응답 대기
     const liked = passed.filter(x => st.likes[x.p.id] === 'like');
     const matched = liked.filter(x => x.their.pct >= st.S.matchCut), waiting = liked.filter(x => x.their.pct < st.S.matchCut);
-    html += `<div class="card" style="margin-top:16px"><h3>💌 매칭 성사 ${matched.length}명 <span class="small muted">— ♥ 좋아요를 눌렀고, 상대가 나를 보는 점수가 ${st.S.matchCut}% 이상</span></h3>
+    html += '<div class="grid2">';
+    html += `<div class="card"><h3>💌 매칭 성사 ${matched.length}명 <span class="small muted">— ♥ 좋아요를 눌렀고, 상대가 나를 보는 점수가 ${st.S.matchCut}% 이상</span></h3>
       ${liked.length ? '' : '<p class="muted small" style="margin:0">아직 좋아요한 사람이 없어요. 추천 카드에서 ♥를 눌러보세요.</p>'}
       ${matched.map(x => `<div class="matchcard"><b>${esc(x.p.name)}</b> <span class="mutual">서로 맞는 정도 <b>${x.mutual}%</b> · 상대가 나를 보는 점수 ${x.their.pct}%</span>
         <div class="small muted" style="margin-top:6px">대화 시작 질문</div><ul>${iceBreakers(x).map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>`).join('')}
@@ -407,12 +414,13 @@ function render() {
 
     // 성향만으로 본 1위 (조건 점수는 빼고 MBTI + 연애 성향 점수만)
     const tb = [...passed].sort((x, y) => y.traitPts - x.traitPts || x.ageDiff - y.ageDiff)[0];
-    html += `<div class="card" style="margin-top:16px"><h3>성향 매칭 — 조건은 빼고 성향만 보면?</h3>
+    html += `<div class="card"><h3>성향 매칭 — 조건은 빼고 성향만 보면?</h3>
       <p style="margin:0"><b>${esc(tb.p.name)}</b>님이 성향 궁합 <b style="color:var(--lime)">${tb.traitPts}/${traitMax(st.S)}점</b>으로 가장 잘 맞아요
       ${tb === a ? ' — <b>조건과 성향 모두 1위</b>입니다.' : ` (전체 순위 ${passed.indexOf(tb) + 1}위).`}</p>
       <p class="small muted" style="margin:6px 0">나: ${esc(mbtiText(st.me))} · ${traitText(st.me)} / 상대: ${esc(mbtiText(tb.p))} · ${traitText(tb.p)}</p>
       <div class="bd">${tb.items.filter(i => i.trait).map(it => `<span class="${it.pts ? 'got' : ''}">${it.label} ${it.pts ? '+' + it.pts : 0} · ${esc(it.detail)}</span>`).join('')}</div></div>`;
 
+    html += '</div>';
     html += `<div class="card" style="margin-top:16px"><h3>전체 순위 — 무엇에 몇 점 줬는지</h3>` +
       passed.map((x, i) => `<div class="rank${i === 0 ? ' first' : ''}">
         <div class="no">${i + 1}</div>
@@ -425,9 +433,9 @@ function render() {
   }
 
   if (dropped.length) {
-    html += `<div class="card" style="margin-top:16px"><h3>① 거르기에서 제외된 사람 — 무엇에 걸렸는지 (${dropped.length}명)</h3>` +
+    html += `<details class="card fold" id="dropBox" ${document.getElementById('dropBox')?.open ? 'open' : ''}><summary><h3>① 거르기에서 제외된 사람 <span class="muted">${dropped.length}명</span></h3></summary>` +
       dropped.map(d => `<div class="drop"><b>${esc(d.p.name)}</b><span class="r">${d.r.map(r => esc(r.text)).join(' · ')}</span>
-        ${st.likes[d.p.id] === 'pass' ? `<button class="x" data-unpass="${esc(d.p.id)}">패스 취소</button>` : ''}</div>`).join('') + `</div>`;
+        ${st.likes[d.p.id] === 'pass' ? `<button class="x" data-unpass="${esc(d.p.id)}">패스 취소</button>` : ''}</div>`).join('') + `</details>`;
   }
   $('result').innerHTML = html;
 }
