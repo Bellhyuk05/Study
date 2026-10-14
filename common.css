@@ -155,7 +155,19 @@ section{margin-top:52px;scroll-margin-top:70px}
 .card{border-radius:16px;padding:20px}
 .card h3 .small{font-weight:400;margin-left:4px}
 .s1grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);gap:16px;align-items:start}
-.deckwrap{position:sticky;top:72px}
+.sidecard{position:sticky;top:72px}
+.sidecard .tp{font-size:14px;padding:5px 12px;margin:3px 2px}
+.nextlink{display:inline-block;margin-top:14px;color:var(--lime);text-decoration:none;font-weight:700;font-size:14px}
+.nextlink:hover{text-decoration:underline}
+.donebar{margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 22px;border-radius:16px;
+  border:2px solid var(--lime);background:linear-gradient(120deg,rgba(216,240,74,.12),transparent 70%)}
+.donebar b{display:block;font-size:17px}
+.donebar span{color:var(--muted);font-size:14px}
+.donebar button{padding:12px 20px;font-size:15px}
+.s3grid{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:16px;align-items:start}
+.dresult.locked{text-align:center;padding:36px 20px}
+.dresult.locked p{color:var(--muted)}
+.rankpill{display:inline-block;font-size:12px;font-weight:700;color:var(--lime-ink);background:var(--lime);border-radius:999px;padding:2px 10px;margin-bottom:8px}
 .card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .card-head h3{margin:0}
 .tabs{display:flex;background:var(--panel2);border-radius:10px;padding:3px;gap:2px}
@@ -180,7 +192,8 @@ details.fold[open]>summary::after{content:'접기 ▴'}
 .winner{border-radius:20px;padding:24px}
 @media (max-width:900px){
   .s1grid{grid-template-columns:1fr}
-  .deckwrap{position:static;order:-1}
+  .sidecard{position:static}
+  .s3grid{grid-template-columns:1fr}
   .logicgrid{grid-template-columns:1fr;grid-template-areas:"filter" "score" "reason"}
 }
 @media (max-width:600px){

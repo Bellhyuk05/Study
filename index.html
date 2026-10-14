@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>소개팅 매칭 로직</title>
-<link rel="stylesheet" href="common.css?v=7">
+<link rel="stylesheet" href="common.css?v=8">
 </head>
 <body>
 <div class="topbar"><div class="tb-in">
   <a class="brand" href="#top">💘 매칭 로직</a>
-  <nav class="steps"><a href="#s1"><i>1</i>올린다</a><a href="#s2"><i>2</i>내 로직</a><a href="#s3"><i>3</i>추천</a></nav>
+  <nav class="steps"><a href="#s1"><i>1</i>올린다</a><a href="#s2"><i>2</i>내 로직</a><a href="#s3"><i>3</i>오늘의 소개</a><a href="#s4"><i>4</i>추천 이유</a></nav>
   <button id="openFriend" class="topbtn" title="친구 프로필을 별도 창에서 입력해요">친구 대신 올리기 ↗ <span id="friendCnt" class="fc"></span></button>
 </div></div>
 
@@ -22,19 +22,18 @@
 <main>
 <!-- ① 올린다 -->
 <section id="s1">
-  <div class="sec-head"><h2><span class="num">1</span>올린다</h2><p>내 프로필을 바꾸면 오른쪽 소개 카드가 바로 바뀌어요</p></div>
+  <div class="sec-head"><h2><span class="num">1</span>올린다</h2><p>프로필과 성향 질문을 채우면 오른쪽에 내 성향이 나와요</p></div>
   <div class="s1grid">
     <div class="card hl">
       <div class="card-head"><h3>내 프로필</h3>
         <div class="tabs" id="meTabs"><button data-tab="basic" class="on">기본 정보</button><button data-tab="like">관심사·소개</button><button data-tab="q">성향 질문</button></div>
       </div>
       <div id="meForm" class="tabbed" data-show="basic"></div>
-      <div id="myType" class="mytype"></div>
     </div>
-    <div class="card deckwrap">
-      <div class="row" style="justify-content:space-between"><h3 style="margin:0">💘 오늘의 소개</h3><span id="deckLeft" class="small muted"></span></div>
-      <p class="small muted" style="margin:4px 0 12px">내 로직 순위대로 한 명씩 보여줘요. ♥를 누르면 상대도 나를 좋아하는지 확인해요.</p>
-      <div id="deck"></div>
+    <div class="card sidecard">
+      <h3>내 성향 결과</h3>
+      <div id="myType"></div>
+      <a class="nextlink" href="#s2">다 채웠으면 ② 내 로직 만들기 →</a>
     </div>
   </div>
   <details class="card fold">
@@ -105,17 +104,33 @@
     <div style="overflow-x:auto"><table class="mchart" id="mbtiChart"></table></div>
     <p class="small muted" style="margin-bottom:0">국내 커뮤니티에서 널리 공유되는 MBTI 궁합표(원본 출처 불명)를 숫자로 옮긴 것입니다. 재미용 기준이고 과학적 근거는 없어요. 내 MBTI 줄이 강조되어 있어요.</p>
   </details>
+  <div class="donebar">
+    <div><b>내 로직을 다 만들었나요?</b><span id="doneHint">완성하면 이 로직으로 오늘의 소개가 시작돼요</span></div>
+    <button id="logicDone">✔ 로직 완성 → 오늘의 소개 받기</button>
+  </div>
 </section>
 
-<!-- ③ 추천하고, 보여준다 -->
+<!-- ③ 오늘의 소개 -->
 <section id="s3">
-  <div class="sec-head"><h2><span class="num">3</span>추천하고, 보여준다</h2><p>1위의 이유를 화면이 말해줍니다</p></div>
+  <div class="sec-head"><h2><span class="num">3</span>오늘의 소개</h2><p>내 로직 순위대로 한 명씩 — ♥를 누르면 상대도 나를 좋아하는지 확인해요</p></div>
+  <div class="s3grid">
+    <div class="card deckwrap">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">💘 오늘의 소개</h3><span id="deckLeft" class="small muted"></span></div>
+      <div id="deck" style="margin-top:12px"></div>
+    </div>
+    <div id="matches"></div>
+  </div>
+</section>
+
+<!-- ④ 추천하고, 보여준다 -->
+<section id="s4">
+  <div class="sec-head"><h2><span class="num">4</span>추천하고, 보여준다</h2><p>누구를 왜 1위로 골랐는지 화면이 말해줍니다</p></div>
   <div id="result"></div>
 </section>
 </main>
 <footer>바이브코딩 · 소개팅 매칭 실습 4 — 데이터는 이 브라우저에만 저장됩니다</footer>
 
-<script src="common.js?v=7"></script>
+<script src="common.js?v=8"></script>
 <script>
 $('meForm').innerHTML = formHTML('me');
 fillForm('me', st.me);
@@ -334,8 +349,7 @@ function render() {
 
   // 내 성향 결과
   const myM = mbtiOf(st.me), unanswered = (st.me.answers || '').split('').filter(c => c !== 'A' && c !== 'B').length + Math.max(0, 10 - (st.me.answers || '').length);
-  $('myType').innerHTML = `<div class="small muted">내 성향 결과</div>
-    <div style="margin-top:4px"><span class="tp">MBTI ${myM ? myM.type + (myM.est ? ' (질문으로 추정)' : '') : '?'}</span>
+  $('myType').innerHTML = `<div><span class="tp">MBTI ${myM ? myM.type + (myM.est ? ' (질문으로 추정)' : '') : '?'}</span>
     ${AXES.map(ax => `<span class="tp">${ax.name}: ${axisLabel(ax, axisVal(st.me, ax.key))}</span>`).join('')}</div>
     ${unanswered ? `<div class="small" style="color:var(--red);margin-top:4px">성향 질문 ${unanswered}개가 비어 있어요</div>` : ''}`;
 
@@ -402,15 +416,7 @@ function render() {
       <div class="ok-line">✔ 1위의 이유를 화면이 말해줍니다</div>
     </div>`;
 
-    // 좋아요 → 매칭 성사 / 응답 대기
-    const liked = passed.filter(x => st.likes[x.p.id] === 'like');
-    const matched = liked.filter(x => x.their.pct >= st.S.matchCut), waiting = liked.filter(x => x.their.pct < st.S.matchCut);
     html += '<div class="grid2">';
-    html += `<div class="card"><h3>💌 매칭 성사 ${matched.length}명 <span class="small muted">— ♥ 좋아요를 눌렀고, 상대가 나를 보는 점수가 ${st.S.matchCut}% 이상</span></h3>
-      ${liked.length ? '' : '<p class="muted small" style="margin:0">아직 좋아요한 사람이 없어요. 추천 카드에서 ♥를 눌러보세요.</p>'}
-      ${matched.map(x => `<div class="matchcard"><b>${esc(x.p.name)}</b> <span class="mutual">서로 맞는 정도 <b>${x.mutual}%</b> · 상대가 나를 보는 점수 ${x.their.pct}%</span>
-        <div class="small muted" style="margin-top:6px">대화 시작 질문</div><ul>${iceBreakers(x).map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>`).join('')}
-      ${waiting.length ? `<div class="small muted" style="margin-top:10px">⏳ 상대 반응 없음: ${waiting.map(x => `${esc(x.p.name)} (상대 점수 ${x.their.pct}%)`).join(', ')}</div>` : ''}</div>`;
 
     // 성향만으로 본 1위 (조건 점수는 빼고 MBTI + 연애 성향 점수만)
     const tb = [...passed].sort((x, y) => y.traitPts - x.traitPts || x.ageDiff - y.ageDiff)[0];
@@ -442,6 +448,7 @@ function render() {
 
 // 좋아요 / 패스 버튼
 function acts(x) {
+  if (!st.logicDone) return '';
   const id = esc(x.p.id);
   if (st.likes[x.p.id] === 'like') {
     const ok = x.their.pct >= st.S.matchCut;
@@ -468,10 +475,39 @@ document.addEventListener('keydown', e => {   // ← 패스, → 좋아요 (입�
   if (btn && (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'Enter')) { e.preventDefault(); btn.click(); }
 });
 
+// 좋아요 → 매칭 성사 / 응답 대기 (오늘의 소개 옆)
+function renderMatches(passed) {
+  const liked = passed.filter(x => st.likes[x.p.id] === 'like');
+  const matched = liked.filter(x => x.their.pct >= st.S.matchCut), waiting = liked.filter(x => x.their.pct < st.S.matchCut);
+  $('matches').innerHTML = `<div class="card"><h3>💌 매칭 성사 ${matched.length}명 <span class="small muted">상대가 나를 보는 점수 ${st.S.matchCut}% 이상</span></h3>
+    ${liked.length ? '' : '<p class="muted small" style="margin:0">아직 좋아요한 사람이 없어요. 왼쪽 카드에서 ♥를 눌러보세요.</p>'}
+    ${matched.map(x => `<div class="matchcard"><b>${esc(x.p.name)}</b> <span class="mutual">서로 맞는 정도 <b>${x.mutual}%</b> · 상대가 나를 보는 점수 ${x.their.pct}%</span>
+      <div class="small muted" style="margin-top:6px">대화 시작 질문</div><ul>${iceBreakers(x).map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>`).join('')}
+    ${waiting.length ? `<div class="small muted" style="margin-top:10px">⏳ 상대 반응 없음: ${waiting.map(x => `${esc(x.p.name)} (상대 점수 ${x.their.pct}%)`).join(', ')}</div>` : ''}</div>`;
+}
+
+/* ---------- 로직 완성 → 오늘의 소개 열기 ---------- */
+$('logicDone').onclick = () => {
+  st.logicDone = true; st.likes = {}; lastLiked = null;   // 새 로직으로 처음부터
+  save(); render();
+  document.getElementById('s3').scrollIntoView({ behavior: 'smooth' });
+};
+
 /* ---------- 오늘의 소개: 한 명씩 카드로 ---------- */
 let lastLiked = null;
 const gauge = (label, v, cls) => `<div class="gauge"><span>${label}</span><div class="bar"><i class="${cls}" style="width:${v}%"></i></div><b>${v}%</b></div>`;
 function renderDeck(passed) {
+  $('logicDone').textContent = st.logicDone ? '↻ 바뀐 로직으로 오늘의 소개 다시 받기' : '✔ 로직 완성 → 오늘의 소개 받기';
+  $('doneHint').textContent = st.logicDone ? '로직을 고쳤다면 다시 눌러 처음부터 소개받아요' : '완성하면 이 로직으로 오늘의 소개가 시작돼요';
+  if (!st.logicDone) {
+    $('deckLeft').textContent = '';
+    $('deck').innerHTML = `<div class="dresult locked"><div class="big">🔒 아직 잠겨 있어요</div>
+      <p>② 내 로직을 다 만들고 <b>로직 완성</b>을 누르면, 그 로직으로 고른 순서대로 한 명씩 소개해 드려요.</p>
+      <a class="nextlink" href="#s2">② 내 로직 만들러 가기 →</a></div>`;
+    $('matches').innerHTML = `<div class="card"><h3>💌 매칭 성사</h3><p class="muted small" style="margin:0">오늘의 소개에서 ♥를 누르면 여기에 결과가 쌓여요.</p></div>`;
+    return;
+  }
+  renderMatches(passed);
   const queue = passed.filter(x => !st.likes[x.p.id]);
   // 패스한 사람은 거르기에서 빠지므로 따로 세서 전체 카드 수에 더한다
   const passCnt = st.profiles.filter(p => st.likes[p.id] === 'pass').length;
@@ -507,6 +543,7 @@ function renderDeck(passed) {
 
   const x = queue[0], p = x.p, mine = st.me.interests;
   $('deck').innerHTML = `<div class="dcard">
+    <div class="rankpill">내 로직 ${passed.indexOf(x) + 1}위</div>
     <div class="dtop"><div><div class="dname">${esc(p.name)} <span>${p.age}</span></div>
       <div class="small muted">${p.region} · ${p.height}cm · ${p.style} · ${p.smoke ? '흡연' : '비흡연'} · 술 ${p.drink}</div></div>
       <div class="dpct">${x.mutual}%<small>서로 맞는 정도</small></div></div>
