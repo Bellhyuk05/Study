@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>소개팅 매칭 로직</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<header>
+  <div class="topline">
+    <h1>가장 잘 맞는 상대를 찾아줍니다</h1>
+    <button id="openFriend" class="topbtn" title="친구 프로필을 별도 창에서 입력해요">친구 프로필 대신 올리기 ↗ <span id="friendCnt" class="fc"></span></button>
+  </div>
+  <p>소개팅 앱이 아니라 <b>매칭 로직</b>입니다. 조건 + <b>MBTI·성향 질문</b>으로 점수를 매기고, 추천 상대와 그 상대를 고른 <b>내 로직</b>이 화면에 나옵니다.</p>
+  <nav class="flow">
+    <a href="#s1">① 내 프로필 올리기</a><span>→ 하나씩 비교 →</span>
+    <a href="#s1">프로필 저장소</a><span>→ 점수 순으로 →</span>
+    <a href="#s3">③ 추천 + 로직 설명</a>
+  </nav>
+</header>
+
+<main>
+<!-- ① 올린다 -->
+<section id="s1">
+  <h2><span class="num">1</span>올린다</h2>
+  <p class="muted small" style="margin-top:-6px">받는 칸: 이름·성별·나이·키·지역·종교·흡연·음주·외모 스타일·연봉·MBTI·관심사·한줄 소개 + 성향 질문 10개</p>
+  <div class="grid">
+    <div class="card hl"><h3>내 프로필</h3><div id="meForm"></div><div id="myType" class="mytype"></div></div>
+    <div class="card deckwrap" style="align-self:start">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">💘 오늘의 소개</h3><span id="deckLeft" class="small muted"></span></div>
+      <p class="small muted" style="margin:4px 0 10px">내 로직 순위대로 한 명씩 보여줘요. ♥를 누르면 상대도 나를 좋아하는지 확인해요.</p>
+      <div id="deck"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="margin:0">프로필 저장소 <span id="cnt" class="muted"></span></h3>
+      <div class="row">
+        <button class="ghost" id="addMeBtn" title="나 자신이 추천에서 빠지는지 확인용">내 프로필도 저장소에 넣어보기</button>
+        <button class="ghost" id="resetBtn">가상 프로필로 초기화</button>
+      </div>
+    </div>
+    <div id="store" class="store"></div>
+  </div>
+</section>
+
+<!-- ② 내 로직 -->
+<section id="s2">
+  <h2><span class="num">2</span>내 로직을 만든다</h2>
+  <div class="grid" id="logic">
+    <div class="card">
+      <h3>① 거르기 — 절대 안 되는 조건은?</h3>
+      <div class="rule"><span>원하는 성별</span><select data-s="wantGender" style="width:110px"><option>여</option><option>남</option><option>상관없음</option></select></div>
+      <div class="rule"><span>나이 범위</span><span><input class="sm" type="number" data-s="ageMin"> ~ <input class="sm" type="number" data-s="ageMax"> 세</span></div>
+      <div class="rule"><span>최소 키 <span class="muted small">(0 = 상관없음)</span></span><span><input class="sm" type="number" data-s="minHeight"> cm</span></div>
+      <div class="rule"><span>흡연자는 절대 안 됨</span><input type="checkbox" data-s="noSmoker"></div>
+      <div class="rule"><span>종교가 다르면 절대 안 됨</span><input type="checkbox" data-s="sameReligionOnly"></div>
+      <div class="rule"><span>나 자신은 추천하지 않음</span><input type="checkbox" checked disabled></div>
+    </div>
+
+    <div class="card">
+      <h3>② 점수 — 무엇이 같으면 몇 점?</h3>
+      <table>
+        <tr><th>항목</th><th>기준</th><th style="text-align:right">점수</th></tr>
+        <tr><td>관심사</td><td>겹치는 관심사 1개당<br><span class="small muted">최대 <input class="sm" type="number" data-w="interestMax" min="1"> 개까지</span></td><td class="pt"><input class="sm" type="number" data-w="interest"></td></tr>
+        <tr><td>나이</td><td>나이 차 2살 이하<br>나이 차 3~4살</td><td class="pt"><input class="sm" type="number" data-w="ageClose"><br><input class="sm" type="number" data-w="ageMid"></td></tr>
+        <tr><td>키</td><td><input class="sm" type="number" data-s="prefHMin"> ~ <input class="sm" type="number" data-s="prefHMax"> cm 안</td><td class="pt"><input class="sm" type="number" data-w="height"></td></tr>
+        <tr><td>외모</td><td>선호 스타일<div class="chips" id="prefStyles" style="margin-top:4px"></div></td><td class="pt"><input class="sm" type="number" data-w="style"></td></tr>
+        <tr><td>지역</td><td>나와 같은 지역</td><td class="pt"><input class="sm" type="number" data-w="region"></td></tr>
+        <tr><td>종교</td><td>나와 같은 종교</td><td class="pt"><input class="sm" type="number" data-w="religion"></td></tr>
+        <tr><td>음주</td><td>나와 음주 스타일 같음</td><td class="pt"><input class="sm" type="number" data-w="drink"></td></tr>
+        <tr><td>연봉</td><td><input class="sm" type="number" data-s="prefIncome" step="100"> 만원 이상</td><td class="pt"><input class="sm" type="number" data-w="income"></td></tr>
+        <tr><td>주선자</td><td>주선자가 추천 한마디로 보증한 사람</td><td class="pt"><input class="sm" type="number" data-w="rec"></td></tr>
+        <tbody id="traitRows"></tbody>
+      </table>
+      <div class="total">만점 <span id="maxScore"></span>점</div>
+    </div>
+
+    <div class="card">
+      <h3>③ 이유 — 왜 이 사람이 1위인가?</h3>
+      <div class="rule"><span>순위 기준</span><select data-s="rankBy" style="width:auto">
+        <option value="mutual">서로 맞는 정도 (쌍방)</option><option value="mine">내 점수만</option></select></div>
+      <div class="rule"><span>매칭 성사 기준<br><span class="small muted">상대가 나를 보는 점수</span></span><span><input class="sm" type="number" data-s="matchCut"> % 이상</span></div>
+      <p class="small muted">상대가 나를 보는 점수(100점): 상대가 원하는 나이 안 30 · 흡연 조건 OK 20 · 관심사 겹침 30 · MBTI 궁합 20</p>
+      <p class="small" style="margin-top:0">통과한 사람마다 ② 점수표로 점수를 매기고, <b>순위 기준이 높은 순</b>으로 줄 세웁니다. 1위는 다음 세 가지를 화면에 말합니다.</p>
+      <ul class="small" style="padding-left:18px">
+        <li>어디서 몇 점을 받았는지</li>
+        <li>2위보다 앞선 <b>결정적 차이</b></li>
+        <li>아쉬운 점 (0점 받은 항목)</li>
+      </ul>
+      <div class="lbl">동점일 때 규칙</div>
+      <ol class="tie">
+        <li>겹치는 관심사가 더 많은 사람</li>
+        <li>나이 차가 더 적은 사람</li>
+        <li>그래도 같으면 이름 가나다순</li>
+      </ol>
+      <p class="small muted">모든 숫자는 바꾸면 바로 결과에 반영됩니다. 21명이면 21개의 로직, 무엇을 중요하게 보느냐가 핵심입니다.</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>MBTI 궁합표 <span class="small muted" id="chartMe"></span></h3>
+    <div class="row small" id="chartLegend" style="margin-bottom:8px"></div>
+    <div style="overflow-x:auto"><table class="mchart" id="mbtiChart"></table></div>
+    <p class="small muted" style="margin-bottom:0">국내 커뮤니티에서 널리 공유되는 MBTI 궁합표(원본 출처 불명)를 숫자로 옮긴 것입니다. 재미용 기준이고 과학적 근거는 없어요.
+      내 MBTI 줄이 강조되어 있어요.</p>
+  </div>
+</section>
+
+<!-- ③ 추천하고, 보여준다 -->
+<section id="s3">
+  <h2><span class="num">3</span>추천하고, 보여준다</h2>
+  <div id="result"></div>
+</section>
+</main>
+<footer>바이브코딩 · 소개팅 매칭 실습 4 — 데이터는 이 브라우저에만 저장됩니다</footer>
+
+<script src="common.js"></script>
+<script>
+$('meForm').innerHTML = formHTML('me');
+fillForm('me', st.me);
+
+$('meForm').addEventListener('input', () => { st.me = readForm('me'); save(); render(); });
+
+// 친구 등록은 별도 창(friend.html). 그 창이 저장하면 여기서 다시 읽어 갱신한다
+$('openFriend').onclick = () => window.open('friend.html', 'friend', 'width=620,height=900');
+window.addEventListener('storage', e => { if (e.key === KEY) { reload(); render(); } });
+window.addEventListener('focus', () => { reload(); render(); });
+window.refreshFromFriend = () => { reload(); render(); };
+
+$('addMeBtn').onclick = () => {
+  st.profiles = st.profiles.filter(p => !p.isMe);
+  st.profiles.push({ ...st.me, id: 'me-copy', isMe: true });
+  save(); render();
+};
+$('resetBtn').onclick = () => {
+  if (!confirm('저장소를 가상 프로필 24명으로 되돌릴까요? (내가 추가한 프로필은 지워집니다)')) return;
+  st.profiles = JSON.parse(JSON.stringify(SAMPLE));
+  save(); render();
+};
+$('store').addEventListener('click', e => {
+  const id = e.target.dataset.del;
+  if (!id) return;
+  st.profiles = st.profiles.filter(p => p.id !== id);
+  save(); render();
+});
+
+/* ---------- ② 로직 설정 바인딩 ---------- */
+$('traitRows').innerHTML = `<tr><td>MBTI</td><td>MBTI 궁합표 등급대로<br><span class="small">${[5, 4, 3, 2, 1].map(k =>
+    `<span style="color:${MBTI_LEVELS[k].color}">${MBTI_LEVELS[k].name} ${MBTI_LEVELS[k].rate * 100}%</span>`).join(' · ')}</span>
+    <br><span class="small muted">MBTI가 '모름'이면 성향 질문으로 추정 · 아래 궁합표 참고</span></td><td class="pt"><input class="sm" type="number" data-w="mbti"></td></tr>` +
+  AXES.map(ax => `<tr><td>성향·${ax.name}</td><td><select data-axis="${ax.key}" style="width:auto">
+    <option value="same">비슷할수록 좋음</option><option value="diff">반대일수록 좋음</option></select>
+    <br><span class="small muted">${ax.a} ↔ 반반 ↔ ${ax.b} · 한 칸 차이면 절반</span></td>
+    <td class="pt"><input class="sm" type="number" data-w="ax_${ax.key}"></td></tr>`).join('');
+$('prefStyles').innerHTML =OPT.style.map(s => `<label class="chip"><input type="checkbox" value="${s}"><span>${s}</span></label>`).join('');
+function fillLogic() {
+  document.querySelectorAll('[data-s]').forEach(el => {
+    const v = st.S[el.dataset.s];
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+  });
+  document.querySelectorAll('[data-w]').forEach(el => el.value = st.S.w[el.dataset.w]);
+  document.querySelectorAll('#prefStyles input').forEach(c => c.checked = st.S.prefStyles.includes(c.value));
+  document.querySelectorAll('[data-axis]').forEach(el => el.value = st.S.axisMode[el.dataset.axis]);
+}
+$('logic').addEventListener('input', () => {
+  document.querySelectorAll('[data-s]').forEach(el => {
+    st.S[el.dataset.s] = el.type === 'checkbox' ? el.checked : el.tagName === 'SELECT' ? el.value : (+el.value || 0);
+  });
+  document.querySelectorAll('[data-w]').forEach(el => st.S.w[el.dataset.w] = Math.max(0, +el.value || 0));
+  st.S.prefStyles = [...document.querySelectorAll('#prefStyles input:checked')].map(c => c.value);
+  document.querySelectorAll('[data-axis]').forEach(el => st.S.axisMode[el.dataset.axis] = el.value);
+  save(); render();
+});
+fillLogic();
+
+/* ---------- 매칭 로직 ---------- */
+function isSelf(p, me) {
+  return p.isMe || (p.name === me.name && p.age === me.age && p.gender === me.gender && p.height === me.height);
+}
+
+// ① 거르기: 걸린 조건 목록을 돌려준다 (비어 있으면 통과)
+function filterReasons(p, me, S) {
+  if (isSelf(p, me)) return [{ key: 'self', text: '나 자신 — 추천하지 않음' }];
+  const r = [];
+  if (S.wantGender !== '상관없음' && p.gender !== S.wantGender) r.push({ key: 'gender', text: `성별 ${p.gender}` });
+  if (p.age < S.ageMin || p.age > S.ageMax) r.push({ key: 'age', text: `나이 ${p.age}세 (희망 ${S.ageMin}~${S.ageMax})` });
+  if (S.minHeight > 0 && p.height < S.minHeight) r.push({ key: 'height', text: `키 ${p.height}cm (최소 ${S.minHeight})` });
+  if (S.noSmoker && p.smoke) r.push({ key: 'smoke', text: '흡연자' });
+  if (S.sameReligionOnly && p.religion !== me.religion) r.push({ key: 'religion', text: `종교 다름 (${p.religion})` });
+  if (st.likes[p.id] === 'pass') r.push({ key: 'pass', text: '내가 패스함' });
+  return r;
+}
+
+// ② 점수: 항목별 점수와 근거를 돌려준다
+function scoreOf(p, me, S) {
+  const w = S.w, items = [];
+  const common = p.interests.filter(i => me.interests.includes(i));
+  const n = Math.min(common.length, w.interestMax);
+  items.push({ label: '관심사', pts: n * w.interest, max: w.interestMax * w.interest,
+    detail: common.length ? `${common.join('·')} ${common.length}개 겹침` : '겹치는 관심사 없음' });
+  const d = Math.abs(p.age - me.age);
+  items.push({ label: '나이', pts: d <= 2 ? w.ageClose : d <= 4 ? w.ageMid : 0, max: Math.max(w.ageClose, w.ageMid), detail: `${d}살 차이` });
+  const hIn = p.height >= S.prefHMin && p.height <= S.prefHMax;
+  items.push({ label: '키', pts: hIn ? w.height : 0, max: w.height, detail: `${p.height}cm ${hIn ? '선호 범위 안' : '선호 범위 밖'}` });
+  const sIn = S.prefStyles.includes(p.style);
+  items.push({ label: '외모', pts: sIn ? w.style : 0, max: w.style, detail: `${p.style} 스타일${sIn ? ' (선호)' : ''}` });
+  const rg = p.region === me.region;
+  items.push({ label: '지역', pts: rg ? w.region : 0, max: w.region, detail: rg ? `둘 다 ${p.region}` : `${p.region} ≠ ${me.region}` });
+  const rl = p.religion === me.religion;
+  items.push({ label: '종교', pts: rl ? w.religion : 0, max: w.religion, detail: rl ? `둘 다 ${p.religion}` : `${p.religion} ≠ ${me.religion}` });
+  const dr = p.drink === me.drink;
+  items.push({ label: '음주', pts: dr ? w.drink : 0, max: w.drink, detail: dr ? `둘 다 술 ${p.drink}` : `술 ${p.drink}` });
+  const inc = p.income >= S.prefIncome;
+  items.push({ label: '연봉', pts: inc ? w.income : 0, max: w.income, detail: `${p.income.toLocaleString()}만원${inc ? '' : ' (기준 미만)'}` });
+
+  items.push({ label: '주선자', pts: p.recommend ? w.rec : 0, max: w.rec,
+    detail: p.recommend ? `주선자 ${p.matchmaker || '친구'} 추천` : '주선자 추천 없음' });
+
+  // 성향 매칭: MBTI 궁합
+  const ma = mbtiOf(me), mb = mbtiOf(p);
+  if (!ma || !mb) items.push({ label: 'MBTI', pts: 0, max: w.mbti, trait: true, detail: 'MBTI 정보 부족' });
+  else {
+    const lv = MBTI_LEVELS[mbtiLevel(ma.type, mb.type)];
+    items.push({ label: 'MBTI', pts: Math.round(w.mbti * lv.rate), max: w.mbti, trait: true,
+      detail: `${ma.type}↔${mbtiText(p)} 궁합표 '${lv.name}'` });
+  }
+  // 성향 매칭: 질문으로 파악한 연애 성향 4가지
+  for (const ax of AXES) {
+    const m = axisVal(me, ax.key), o = axisVal(p, ax.key), W = w['ax_' + ax.key];
+    if (m === null || o === null) { items.push({ label: ax.name, pts: 0, max: W, trait: true, detail: '성향 질문 미응답' }); continue; }
+    const gap = Math.abs(m - o), mode = S.axisMode[ax.key];
+    const k = mode === 'same' ? [1, .5, 0][gap] : [0, .5, 1][gap];
+    items.push({ label: ax.name, pts: Math.round(W * k), max: W, trait: true,
+      detail: `나 ${axisLabel(ax, m)}·상대 ${axisLabel(ax, o)}${mode === 'diff' ? ' (반대가 좋음)' : ''}` });
+  }
+  const traitPts = items.filter(i => i.trait).reduce((s, i) => s + i.pts, 0);
+  return { items, total: items.reduce((s, i) => s + i.pts, 0), traitPts, common: common.length, ageDiff: d };
+}
+const traitMax = S => S.w.mbti + AXES.reduce((s, ax) => s + S.w['ax_' + ax.key], 0);
+function maxScore(S) {
+  const w = S.w;
+  return w.interest * w.interestMax + Math.max(w.ageClose, w.ageMid) + w.height + w.style + w.region + w.religion + w.drink + w.income + w.rec + traitMax(S);
+}
+
+// 쌍방 매칭: 상대 입장에서 나를 보는 점수 (100점 만점)
+function theirOf(p, me) {
+  const items = [];
+  const lo = p.prefAgeMin ?? p.age - 4, hi = p.prefAgeMax ?? p.age + 4;
+  const ageOk = me.age >= lo && me.age <= hi;
+  items.push({ label: '원하는 나이', pts: ageOk ? 30 : 0, detail: `${lo}~${hi}세 희망, 나 ${me.age}세` });
+  const smokeOk = !(p.prefNoSmoker && me.smoke);
+  items.push({ label: '흡연', pts: smokeOk ? 20 : 0, detail: smokeOk ? '조건 OK' : '흡연자를 싫어함' });
+  const c = Math.min(3, p.interests.filter(i => me.interests.includes(i)).length);
+  items.push({ label: '관심사', pts: c * 10, detail: `${c}개 겹침` });
+  const ma = mbtiOf(me), mb = mbtiOf(p), lv = ma && mb ? MBTI_LEVELS[mbtiLevel(mb.type, ma.type)] : null;
+  items.push({ label: 'MBTI', pts: lv ? Math.round(20 * lv.rate) : 0, detail: lv ? lv.name : '정보 부족' });
+  return { items, pct: items.reduce((s, i) => s + i.pts, 0) };
+}
+const mutualMode = () => st.S.rankBy !== 'mine';
+const rankVal = x => mutualMode() ? x.mutual : x.total;
+
+// 매칭 성사 후 대화 시작 질문: 겹치는 관심사 → 성향 → MBTI 순서로 최대 3개
+function iceBreakers(x) {
+  const qs = x.p.interests.filter(i => st.me.interests.includes(i)).map(i => ICE[i]);
+  if (!qs.length && x.p.interests[0]) qs.push(`${x.p.interests[0]} 좋아하신다던데, 어떻게 시작하게 됐어요?`);
+  const mp = axisVal(st.me, 'plan'), op = axisVal(x.p, 'plan');
+  if (mp === 2 && op === 2) qs.push('둘 다 계획형이네요! 첫 데이트 코스 같이 짜볼까요?');
+  else if (mp === 0 && op === 0) qs.push('둘 다 즉흥형이네요. 이번 주말에 끌리는 곳 있어요?');
+  const ma = mbtiOf(st.me), mb = mbtiOf(x.p);
+  if (ma && mb && mbtiLevel(ma.type, mb.type) === 5) qs.push(`MBTI 궁합표에서 ${ma.type}랑 ${mb.type}가 천생연분이래요. MBTI 믿는 편이에요?`);
+  return qs.slice(0, 3);
+}
+
+function compute() {
+  const { me, S } = st, passed = [], dropped = [];
+  for (const p of st.profiles) {
+    const r = filterReasons(p, me, S);
+    if (r.length) { dropped.push({ p, r }); continue; }
+    const sc = scoreOf(p, me, S), their = theirOf(p, me);
+    const minePct = Math.round(sc.total / (maxScore(S) || 1) * 100);
+    passed.push({ p, ...sc, minePct, their, mutual: Math.round(Math.sqrt(minePct * their.pct)) });
+  }
+  passed.sort((a, b) => rankVal(b) - rankVal(a) || b.common - a.common || a.ageDiff - b.ageDiff || a.p.name.localeCompare(b.p.name, 'ko'));
+  return { passed, dropped };
+}
+
+// ③ 이유: 1위가 왜 1위인지 문장으로 만든다
+function explain(passed, max) {
+  const a = passed[0], b = passed[1], lines = [];
+  const got = a.items.filter(i => i.pts > 0).sort((x, y) => y.pts - x.pts);
+  const mm = mutualMode(), unit = mm ? '%' : '점';
+  if (mm) lines.push(`<b>${esc(a.p.name)}</b>님은 <b>서로 맞는 정도 ${a.mutual}%</b>로, 조건을 통과한 ${passed.length}명 중 가장 높습니다.
+    (내가 보는 점수 ${a.total}/${max}점 = ${a.minePct}%, 상대가 나를 보는 점수 ${a.their.pct}% → √(${a.minePct}×${a.their.pct}) = ${a.mutual}%)`);
+  else lines.push(`<b>${esc(a.p.name)}</b>님은 ${max}점 만점에 <b>${a.total}점</b>으로, 조건을 통과한 ${passed.length}명 중 가장 높습니다.`);
+  if (got.length) lines.push(`내 점수표에서 받은 곳: ${got.map(i => `${i.label} <b>+${i.pts}</b> (${esc(i.detail)})`).join(', ')}`);
+  if (mm) lines.push(`상대가 나를 볼 때: ${a.their.items.map(i => `${i.label} +${i.pts} (${esc(i.detail)})`).join(', ')}`);
+  if (!b) {
+    lines.push(`거르기 조건을 통과한 사람이 ${esc(a.p.name)}님 한 명뿐이라 비교 대상이 없습니다.`);
+  } else if (rankVal(a) > rankVal(b)) {
+    const adv = a.items.map((it, k) => ({ it, d: it.pts - b.items[k].pts })).filter(x => x.d > 0).sort((x, y) => y.d - x.d);
+    if (mm) {
+      lines.push(`2위 ${esc(b.p.name)}님(서로 ${b.mutual}%)보다 <b>${a.mutual - b.mutual}%p</b> 앞섭니다 — 내 점수 ${a.minePct}% vs ${b.minePct}%, 상대 점수 ${a.their.pct}% vs ${b.their.pct}%`);
+      const tAdv = a.their.items.map((it, k) => ({ it, d: it.pts - b.their.items[k].pts })).filter(x => x.d > 0);
+      if (tAdv.length) lines.push(`상대 쪽 점수에서 앞선 곳: ` + tAdv.map(x => `${x.it.label} ${esc(x.it.detail)} (<b>+${x.d}</b>)`).join(', '));
+      if (adv.length) lines.push(`내 점수표에서 앞선 곳: ` + adv.map(x => `${x.it.label} ${esc(x.it.detail)} (<b>+${x.d}</b>)`).join(', '));
+    } else lines.push(`2위 ${esc(b.p.name)}님(${b.total}점)보다 <b>${a.total - b.total}점</b> 앞선 결정적 차이: ` +
+      adv.map(x => `${x.it.label} ${esc(x.it.detail)} (<b>+${x.d}</b>)`).join(', '));
+    const back = a.items.map((it, k) => ({ it, d: b.items[k].pts - it.pts })).filter(x => x.d > 0);
+    if (back.length) lines.push(`반대로 ${esc(b.p.name)}님이 더 높았던 곳: ` + back.map(x => `${x.it.label} ${esc(b.items[a.items.indexOf(x.it)].detail)} (+${x.d})`).join(', '));
+  } else {
+    let why;
+    if (a.common !== b.common) why = `동점 규칙 1번 — 겹치는 관심사가 ${a.common}개로 ${esc(b.p.name)}님(${b.common}개)보다 많습니다.`;
+    else if (a.ageDiff !== b.ageDiff) why = `동점 규칙 2번 — 나이 차가 ${a.ageDiff}살로 ${esc(b.p.name)}님(${b.ageDiff}살)보다 적습니다.`;
+    else why = `동점 규칙 3번 — 모든 조건이 같아 이름 가나다순으로 앞섭니다.`;
+    lines.push(`2위 ${esc(b.p.name)}님과 ${rankVal(a)}${unit} 동점이지만, ${why}`);
+  }
+  const miss = a.items.filter(i => i.pts < i.max);
+  if (miss.length) lines.push(`아쉬운 점: ${miss.map(i => `${i.label} (${esc(i.detail)})`).join(', ')}`);
+  return lines;
+}
+
+/* ---------- 화면 그리기 ---------- */
+function render() {
+  const { passed, dropped } = compute();
+  const max = maxScore(st.S);
+  $('maxScore').textContent = max;
+
+  // 내 성향 결과
+  const myM = mbtiOf(st.me), unanswered = (st.me.answers || '').split('').filter(c => c !== 'A' && c !== 'B').length + Math.max(0, 10 - (st.me.answers || '').length);
+  $('myType').innerHTML = `<div class="small muted">내 성향 결과</div>
+    <div style="margin-top:4px"><span class="tp">MBTI ${myM ? myM.type + (myM.est ? ' (질문으로 추정)' : '') : '?'}</span>
+    ${AXES.map(ax => `<span class="tp">${ax.name}: ${axisLabel(ax, axisVal(st.me, ax.key))}</span>`).join('')}</div>
+    ${unanswered ? `<div class="small" style="color:var(--red);margin-top:4px">성향 질문 ${unanswered}개가 비어 있어요</div>` : ''}`;
+
+  // MBTI 궁합표 (내 MBTI 줄 강조)
+  const mine = myM ? myM.type : '';
+  $('chartMe').textContent = mine ? `— 내 MBTI ${mine}` : '';
+  $('chartLegend').innerHTML = [5, 4, 3, 2, 1].map(k => `<span><i class="sw" style="background:${MBTI_LEVELS[k].color}"></i>${MBTI_LEVELS[k].name}</span>`).join('');
+  $('mbtiChart').classList.toggle('hasme', !!mine);
+  $('mbtiChart').innerHTML = `<tr><th></th>${MBTI_ORDER.map(t => `<th class="${t === mine ? 'me' : ''}">${t}</th>`).join('')}</tr>` +
+    MBTI_ORDER.map(r => `<tr class="${r === mine ? 'me' : ''}"><th>${r}</th>${MBTI_ORDER.map(c => {
+      const k = mbtiLevel(r, c);
+      return `<td style="background:${MBTI_LEVELS[k].color}" title="${r}↔${c} ${MBTI_LEVELS[k].name}">${r === mine ? MBTI_LEVELS[k].name.slice(0, 2) : ''}</td>`;
+    }).join('')}</tr>`).join('');
+
+  // 내가 대신 올려준 친구 목록
+  const friends = st.profiles.filter(p => p.byFriend);
+  $('friendCnt').textContent = friends.length;
+  renderDeck(passed);
+
+  // 저장소 카드 (순위/제외 배지 포함)
+  const rankOf = {};
+  passed.forEach((x, i) => rankOf[x.p.id] = i + 1);
+  $('cnt').textContent = `${st.profiles.length}명`;
+  $('store').innerHTML = st.profiles.map(p => {
+    const rk = rankOf[p.id];
+    const badge = p.isMe ? '<span class="badge no">나</span>' : rk ? `<span class="badge ok">${rk}위</span>` : '<span class="badge no">제외</span>';
+    return `<div class="pc">${badge}<button class="x" data-del="${esc(p.id)}" title="삭제">✕</button>
+      <div class="nm">${esc(p.name)} <span class="meta">${p.gender}·${p.age}세·${p.height}cm</span></div>
+      <div class="meta">${p.region} · ${p.religion} · ${p.smoke ? '흡연' : '비흡연'} · 술 ${p.drink} · ${p.style} · ${p.income.toLocaleString()}만원</div>
+      <div class="tags">${p.interests.map(esc).join(' · ') || '<span class="meta">관심사 없음</span>'}</div>
+      <div class="meta" style="color:var(--lime)">${esc(mbtiText(p))} · ${traitText(p)}</div>
+      ${p.intro ? `<div class="meta" style="margin-top:4px">“${esc(p.intro)}”</div>` : ''}
+      ${p.recommend ? `<div class="rec">주선자 ${esc(p.matchmaker || '나')}: “${esc(p.recommend)}”</div>` : ''}</div>`;
+  }).join('');
+
+  let html = `<div class="summary">
+    <span class="pill">저장소 <b>${st.profiles.length}</b>명</span><span class="muted">→ ① 거르기 →</span>
+    <span class="pill">통과 <b>${passed.length}</b>명 · 제외 ${dropped.length}명</span><span class="muted">→ ② 점수 순 →</span>
+    <span class="pill">추천 1위 <b>${passed[0] ? esc(passed[0].p.name) : '없음'}</b></span></div>`;
+
+  if (!passed.length) {
+    const cnt = {};
+    dropped.forEach(d => d.r.forEach(r => { if (r.key !== 'self') cnt[r.key] = (cnt[r.key] || 0) + 1; }));
+    const names = { gender: '성별', age: '나이 범위', height: '최소 키', smoke: '흡연자 제외', religion: '같은 종교만', pass: '내가 패스함' };
+    const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
+    html += `<div class="empty"><h3>조건에 맞는 사람이 0명입니다</h3>
+      <p>모든 프로필이 ① 거르기 조건에 걸렸어요.</p>
+      ${top.length ? `<p>가장 많이 걸린 조건: ${top.map(([k, v]) => `<b>${names[k]}</b> ${v}명`).join(', ')}</p>
+      <p class="muted">② 내 로직에서 이 조건을 조금 완화해 보세요.</p>` : '<p class="muted">저장소에 프로필을 먼저 올려주세요.</p>'}</div>`;
+  } else {
+    const a = passed[0];
+    html += `<div class="winner">
+      <div class="top">
+        <div><div class="small muted">추천 1위</div><div class="name">${esc(a.p.name)}</div>
+          <div class="muted">${a.p.gender}·${a.p.age}세·${a.p.height}cm · ${a.p.region} · ${a.p.style} · ${a.p.interests.map(esc).join('·')}</div>
+          <div style="color:var(--lime)">${esc(mbtiText(a.p))} · ${traitText(a.p)} — 성향 궁합 ${a.traitPts}/${traitMax(st.S)}점</div>
+          ${a.p.intro ? `<div style="margin-top:4px">“${esc(a.p.intro)}”</div>` : ''}
+          ${a.p.recommend ? `<div class="rec">주선자 ${esc(a.p.matchmaker || '나')}의 한마디: “${esc(a.p.recommend)}”</div>` : ''}
+          ${acts(a)}</div>
+        ${mutualMode() ? `<div class="score">${a.mutual}<small>%</small><div class="small muted" style="font-weight:500">서로 맞는 정도<br>내 점수 ${a.total}/${max}</div></div>`
+          : `<div class="score">${a.total}<small> / ${max}점</small></div>`}
+      </div>
+      <div class="why"><h4>왜 이 사람이 1위인가?</h4><ul>${explain(passed, max).map(l => `<li>${l}</li>`).join('')}</ul></div>
+      <div class="ok-line">✔ 1위의 이유를 화면이 말해줍니다</div>
+    </div>`;
+
+    // 좋아요 → 매칭 성사 / 응답 대기
+    const liked = passed.filter(x => st.likes[x.p.id] === 'like');
+    const matched = liked.filter(x => x.their.pct >= st.S.matchCut), waiting = liked.filter(x => x.their.pct < st.S.matchCut);
+    html += `<div class="card" style="margin-top:16px"><h3>💌 매칭 성사 ${matched.length}명 <span class="small muted">— ♥ 좋아요를 눌렀고, 상대가 나를 보는 점수가 ${st.S.matchCut}% 이상</span></h3>
+      ${liked.length ? '' : '<p class="muted small" style="margin:0">아직 좋아요한 사람이 없어요. 추천 카드에서 ♥를 눌러보세요.</p>'}
+      ${matched.map(x => `<div class="matchcard"><b>${esc(x.p.name)}</b> <span class="mutual">서로 맞는 정도 <b>${x.mutual}%</b> · 상대가 나를 보는 점수 ${x.their.pct}%</span>
+        <div class="small muted" style="margin-top:6px">대화 시작 질문</div><ul>${iceBreakers(x).map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>`).join('')}
+      ${waiting.length ? `<div class="small muted" style="margin-top:10px">⏳ 상대 반응 없음: ${waiting.map(x => `${esc(x.p.name)} (상대 점수 ${x.their.pct}%)`).join(', ')}</div>` : ''}</div>`;
+
+    // 성향만으로 본 1위 (조건 점수는 빼고 MBTI + 연애 성향 점수만)
+    const tb = [...passed].sort((x, y) => y.traitPts - x.traitPts || x.ageDiff - y.ageDiff)[0];
+    html += `<div class="card" style="margin-top:16px"><h3>성향 매칭 — 조건은 빼고 성향만 보면?</h3>
+      <p style="margin:0"><b>${esc(tb.p.name)}</b>님이 성향 궁합 <b style="color:var(--lime)">${tb.traitPts}/${traitMax(st.S)}점</b>으로 가장 잘 맞아요
+      ${tb === a ? ' — <b>조건과 성향 모두 1위</b>입니다.' : ` (전체 순위 ${passed.indexOf(tb) + 1}위).`}</p>
+      <p class="small muted" style="margin:6px 0">나: ${esc(mbtiText(st.me))} · ${traitText(st.me)} / 상대: ${esc(mbtiText(tb.p))} · ${traitText(tb.p)}</p>
+      <div class="bd">${tb.items.filter(i => i.trait).map(it => `<span class="${it.pts ? 'got' : ''}">${it.label} ${it.pts ? '+' + it.pts : 0} · ${esc(it.detail)}</span>`).join('')}</div></div>`;
+
+    html += `<div class="card" style="margin-top:16px"><h3>전체 순위 — 무엇에 몇 점 줬는지</h3>` +
+      passed.map((x, i) => `<div class="rank${i === 0 ? ' first' : ''}">
+        <div class="no">${i + 1}</div>
+        <div><b>${esc(x.p.name)}</b> <span class="muted small">${x.p.age}세·${x.p.height}cm·${x.p.region}</span>
+          <span class="mutual"> · 내 ${x.minePct}% · 상대 ${x.their.pct}% → 서로 <b>${x.mutual}%</b></span>
+          <div class="bar"><i style="width:${mutualMode() ? x.mutual : (max ? x.total / max * 100 : 0)}%"></i></div>
+          <div class="bd">${x.items.map(it => `<span class="${it.pts ? 'got' : ''}" title="${esc(it.detail)}">${it.label} ${it.pts ? '+' + it.pts : 0}</span>`).join('')}</div>
+          ${acts(x)}</div>
+        <div class="pts">${rankVal(x)}<span class="small muted">${mutualMode() ? '%' : '점'}</span></div></div>`).join('') + `</div>`;
+  }
+
+  if (dropped.length) {
+    html += `<div class="card" style="margin-top:16px"><h3>① 거르기에서 제외된 사람 — 무엇에 걸렸는지 (${dropped.length}명)</h3>` +
+      dropped.map(d => `<div class="drop"><b>${esc(d.p.name)}</b><span class="r">${d.r.map(r => esc(r.text)).join(' · ')}</span>
+        ${st.likes[d.p.id] === 'pass' ? `<button class="x" data-unpass="${esc(d.p.id)}">패스 취소</button>` : ''}</div>`).join('') + `</div>`;
+  }
+  $('result').innerHTML = html;
+}
+
+// 좋아요 / 패스 버튼
+function acts(x) {
+  const id = esc(x.p.id);
+  if (st.likes[x.p.id] === 'like') {
+    const ok = x.their.pct >= st.S.matchCut;
+    return `<div class="acts"><span class="state ${ok ? 'ok' : ''}">${ok ? '💌 매칭 성사' : `⏳ 상대 반응 없음 (상대 점수 ${x.their.pct}%)`}</span>
+      <button class="pass" data-unlike="${id}">좋아요 취소</button></div>`;
+  }
+  return `<div class="acts"><button class="like" data-like="${id}">♥ 좋아요</button><button class="pass" data-pass="${id}">✕ 패스</button></div>`;
+}
+document.addEventListener('click', e => {
+  const d = e.target.closest('button')?.dataset;
+  if (!d) return;
+  if (d.like) { st.likes[d.like] = 'like'; lastLiked = d.like; }
+  else if (d.pass) { st.likes[d.pass] = 'pass'; lastLiked = null; }
+  else if (d.unlike || d.unpass) delete st.likes[d.unlike || d.unpass];
+  else if ('next' in d) lastLiked = null;
+  else if ('restart' in d) { st.likes = {}; lastLiked = null; }
+  else if (d.copy) { navigator.clipboard?.writeText(d.copy); e.target.textContent = '복사됨 ✓'; return; }
+  else return;
+  save(); render();
+});
+document.addEventListener('keydown', e => {   // ← 패스, → 좋아요 (입력칸 밖에서)
+  if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  const btn = document.querySelector(e.key === 'ArrowRight' ? '#deck [data-like]' : e.key === 'ArrowLeft' ? '#deck [data-pass]' : '#deck [data-next]');
+  if (btn && (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'Enter')) { e.preventDefault(); btn.click(); }
+});
+
+/* ---------- 오늘의 소개: 한 명씩 카드로 ---------- */
+let lastLiked = null;
+const gauge = (label, v, cls) => `<div class="gauge"><span>${label}</span><div class="bar"><i class="${cls}" style="width:${v}%"></i></div><b>${v}%</b></div>`;
+function renderDeck(passed) {
+  const queue = passed.filter(x => !st.likes[x.p.id]);
+  // 패스한 사람은 거르기에서 빠지므로 따로 세서 전체 카드 수에 더한다
+  const passCnt = st.profiles.filter(p => st.likes[p.id] === 'pass').length;
+  const total = passed.length + passCnt, seen = total - queue.length;
+  $('deckLeft').textContent = total ? `${Math.min(seen + 1, total)} / ${total}` : '';
+
+  // 방금 ♥ 누른 사람의 결과 화면
+  const hit = lastLiked && passed.find(x => x.p.id === lastLiked);
+  if (hit) {
+    const ok = hit.their.pct >= st.S.matchCut;
+    const weak = hit.their.items.filter(i => i.pts === 0).map(i => `${i.label}(${esc(i.detail)})`);
+    $('deck').innerHTML = ok
+      ? `<div class="dresult ok"><div class="big">💌 매칭 성사!</div>
+          <p><b>${esc(hit.p.name)}</b>님도 나를 <b>${hit.their.pct}%</b> 마음에 들어해요. 서로 맞는 정도 <b>${hit.mutual}%</b></p>
+          <div class="small muted">이렇게 말을 걸어보세요</div>
+          ${iceBreakers(hit).map(q => `<div class="ice"><span>${esc(q)}</span><button class="pass" data-copy="${esc(q)}">복사</button></div>`).join('')}
+          <button data-next style="margin-top:12px;width:100%">다음 사람 보기 →</button></div>`
+      : `<div class="dresult"><div class="big">⏳ 아직 반응이 없어요</div>
+          <p><b>${esc(hit.p.name)}</b>님이 나를 보는 점수는 <b>${hit.their.pct}%</b>로 기준(${st.S.matchCut}%)보다 낮아요.</p>
+          ${weak.length ? `<p class="small muted">상대 쪽에서 0점이었던 곳: ${weak.join(', ')}</p>` : ''}
+          <button data-next style="margin-top:8px;width:100%">다음 사람 보기 →</button></div>`;
+    return;
+  }
+
+  if (!queue.length) {
+    const likes = passed.filter(x => st.likes[x.p.id] === 'like');
+    const m = likes.filter(x => x.their.pct >= st.S.matchCut).length;
+    $('deck').innerHTML = `<div class="dresult"><div class="big">${total ? '오늘의 소개를 모두 봤어요' : '소개할 사람이 없어요'}</div>
+      <p>좋아요 ${likes.length}명 · 매칭 성사 <b>${m}명</b> · 패스 ${passCnt}명</p>
+      ${total ? '<button data-restart style="width:100%">처음부터 다시 보기</button>' : '<p class="small muted">② 거르기 조건을 완화하거나 친구 프로필을 올려주세요.</p>'}</div>`;
+    return;
+  }
+
+  const x = queue[0], p = x.p, mine = st.me.interests;
+  $('deck').innerHTML = `<div class="dcard">
+    <div class="dtop"><div><div class="dname">${esc(p.name)} <span>${p.age}</span></div>
+      <div class="small muted">${p.region} · ${p.height}cm · ${p.style} · ${p.smoke ? '흡연' : '비흡연'} · 술 ${p.drink}</div></div>
+      <div class="dpct">${x.mutual}%<small>서로 맞는 정도</small></div></div>
+    ${p.intro ? `<div class="dintro">“${esc(p.intro)}”</div>` : ''}
+    <div class="chips" style="margin:8px 0">${p.interests.map(i => `<span class="tag ${mine.includes(i) ? 'same' : ''}">${esc(i)}${mine.includes(i) ? ' ✓' : ''}</span>`).join('')}</div>
+    <div class="small" style="color:var(--lime)">${esc(mbtiText(p))} · ${traitText(p)}</div>
+    ${p.recommend ? `<div class="rec">🤝 주선자 <b>${esc(p.matchmaker || '친구')}</b>: “${esc(p.recommend)}”</div>` : ''}
+    <div style="margin-top:10px">${gauge('내가 볼 때', x.minePct, '')}${gauge('상대가 볼 때', x.their.pct, 'pink')}</div>
+    <details class="small"><summary>상대 입장에서 나는 몇 점?</summary>
+      ${x.their.items.map(i => `<div class="drop"><b>${i.label}</b><span class="${i.pts ? '' : 'r'}">+${i.pts} · ${esc(i.detail)}</span></div>`).join('')}</details>
+    <div class="dacts"><button class="no" data-pass="${esc(p.id)}" title="← 키">✕ 패스</button><button class="yes" data-like="${esc(p.id)}" title="→ 키">♥ 좋아요</button></div>
+    <div class="small muted" style="text-align:center;margin-top:6px">키보드 ← 패스 · → 좋아요</div>
+  </div>`;
+}
+render();
+</script>
+</body>
+</html>

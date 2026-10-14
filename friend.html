@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>친구 프로필 등록</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<header>
+  <h1>친구 프로필 대신 올려주기</h1>
+  <p>여기서 입력한 친구는 <b>프로필 저장소</b>에 들어가고, 메인 화면의 추천 결과에 바로 반영돼요.</p>
+</header>
+<main>
+  <section style="margin-top:16px">
+    <div class="card hl">
+      <h3>친구 정보</h3>
+      <div id="addForm"></div>
+      <div id="preview" class="mytype"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="addBtn">저장소에 추가</button>
+        <button class="ghost" id="closeBtn">창 닫기</button>
+        <span id="addMsg" class="small"></span>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>내가 대신 올려준 친구 <span id="cnt" class="muted"></span></h3>
+      <div id="list" class="store" style="margin-top:0"></div>
+    </div>
+  </section>
+</main>
+
+<script src="common.js"></script>
+<script>
+const BLANK = { gender: '여', region: '서울', religion: '무교', drink: '가끔', style: '귀여운', mbti: '모름', interests: [], answers: '',
+  prefAgeMin: 22, prefAgeMax: 32, prefNoSmoker: true, matchmaker: '', recommend: '' };
+$('addForm').innerHTML = formHTML('add');
+fillForm('add', BLANK);
+
+function msg(t, bad) { $('addMsg').textContent = t; $('addMsg').style.color = bad ? 'var(--red)' : 'var(--green)'; }
+function tellMain() { try { window.opener && window.opener.refreshFromFriend && window.opener.refreshFromFriend(); } catch (e) {} }
+
+// 입력하는 동안 친구의 MBTI·성향을 미리 보여준다
+function preview() {
+  const p = readForm('add'), m = mbtiOf(p), left = p.answers.split('').filter(c => c === '-').length;
+  $('preview').innerHTML = `<div class="small muted">친구 성향 미리보기</div>
+    <span class="tp">MBTI ${m ? m.type + (m.est ? ' (질문으로 추정)' : '') : '?'}</span>
+    ${AXES.map(ax => `<span class="tp">${ax.name}: ${axisLabel(ax, axisVal(p, ax.key))}</span>`).join('')}
+    ${left ? `<div class="small" style="color:var(--red);margin-top:4px">성향 질문 ${left}개 남음</div>` : ''}`;
+}
+$('addForm').addEventListener('input', preview);
+
+function renderList() {
+  reload();
+  const friends = st.profiles.filter(p => p.byFriend);
+  $('cnt').textContent = `${friends.length}명`;
+  $('list').innerHTML = friends.length ? friends.map(p => `<div class="pc"><button class="x" data-del="${esc(p.id)}" title="삭제">✕</button>
+      <div class="nm">${esc(p.name)} <span class="meta">${p.gender}·${p.age}세·${p.height}cm</span></div>
+      <div class="meta">${p.region} · ${p.religion} · ${p.smoke ? '흡연' : '비흡연'} · 술 ${p.drink} · ${p.style}</div>
+      <div class="tags">${p.interests.map(esc).join(' · ')}</div>
+      <div class="meta" style="color:var(--lime)">${esc(mbtiText(p))} · ${traitText(p)}</div>
+      ${p.recommend ? `<div class="meta" style="margin-top:4px">주선자 ${esc(p.matchmaker || '나')}: “${esc(p.recommend)}”</div>` : ''}</div>`).join('')
+    : '<span class="muted small">아직 없어요</span>';
+}
+
+$('addBtn').onclick = () => {
+  const p = readForm('add');
+  if (!p.name) return msg('이름을 입력하세요', true);
+  if (!p.age || p.age < 19) return msg('나이를 확인하세요 (19세 이상)', true);
+  if (!p.height) return msg('키를 입력하세요', true);
+  if (p.answers.includes('-')) return msg('성향 질문 10개에 모두 답해 주세요', true);
+  reload();                                   // 메인 창에서 바뀐 내용 위에 추가
+  st.profiles.push({ ...p, id: 'u' + Date.now(), byFriend: true });
+  save(); tellMain(); renderList();
+  fillForm('add', { ...BLANK, gender: p.gender, matchmaker: p.matchmaker }); preview();
+  msg(`${p.name}님을 저장소에 추가했어요`);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+$('list').addEventListener('click', e => {
+  const id = e.target.dataset.del;
+  if (!id) return;
+  reload();
+  st.profiles = st.profiles.filter(p => p.id !== id);
+  save(); tellMain(); renderList();
+});
+$('closeBtn').onclick = () => window.close();
+window.addEventListener('storage', e => { if (e.key === KEY) renderList(); });
+
+preview();
+renderList();
+</script>
+</body>
+</html>
