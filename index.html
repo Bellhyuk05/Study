@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>소개팅 매칭 로직</title>
-<link rel="stylesheet" href="common.css?v=8">
+<link rel="stylesheet" href="common.css?v=9">
 </head>
 <body>
 <div class="topbar"><div class="tb-in">
@@ -112,14 +112,18 @@
 
 <!-- ③ 오늘의 소개 -->
 <section id="s3">
-  <div class="sec-head"><h2><span class="num">3</span>오늘의 소개</h2><p>내 로직 순위대로 한 명씩 — ♥를 누르면 상대도 나를 좋아하는지 확인해요</p></div>
+  <div class="sec-head"><h2><span class="num">3</span>오늘의 소개</h2><p>잘 맞는 사람과 가장 안 맞는 사람을 나란히 — 💌 매칭 요청을 보내고 상대가 수락하면 연락할 수 있어요</p></div>
   <div class="s3grid">
-    <div class="card deckwrap">
-      <div class="row" style="justify-content:space-between"><h3 style="margin:0">💘 오늘의 소개</h3><span id="deckLeft" class="small muted"></span></div>
-      <div id="deck" style="margin-top:12px"></div>
+    <div class="card deckwrap best">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">💘 가장 잘 맞는 사람</h3><span id="leftBest" class="small muted"></span></div>
+      <div id="deckBest" style="margin-top:12px"></div>
     </div>
-    <div id="matches"></div>
+    <div class="card deckwrap worst">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">💀 가장 안 맞는 사람</h3><span id="leftWorst" class="small muted"></span></div>
+      <div id="deckWorst" style="margin-top:12px"></div>
+    </div>
   </div>
+  <div id="matches" style="margin-top:16px"></div>
 </section>
 
 <!-- ④ 추천하고, 보여준다 -->
@@ -130,7 +134,7 @@
 </main>
 <footer>바이브코딩 · 소개팅 매칭 실습 4 — 데이터는 이 브라우저에만 저장됩니다</footer>
 
-<script src="common.js?v=8"></script>
+<script src="common.js?v=9"></script>
 <script>
 $('meForm').innerHTML = formHTML('me');
 fillForm('me', st.me);
@@ -446,116 +450,148 @@ function render() {
   $('result').innerHTML = html;
 }
 
-// 좋아요 / 패스 버튼
+/* ---------- 매칭 요청 → 상대 수락 → 연락 ---------- */
+// st.likes[id] = 'like'(요청 보냄) | 'pass', st.reqAt[id] = 보낸 시각, st.reqFrom[id] = 어느 쪽 카드에서 보냈는지
+// 상대의 대답: 상대가 나를 보는 점수가 '매칭 성사 기준' 이상이면 수락, 아니면 거절 (확인하는 데 잠깐 걸림)
+const WAIT_MS = 2500;
+const STATE_TEXT = { pending: '📨 상대가 확인 중…', accepted: '💌 수락! 연락 가능', declined: '🙅 거절했어요' };
+function reqState(x) {
+  if (st.likes[x.p.id] !== 'like') return null;
+  if (Date.now() - ((st.reqAt || {})[x.p.id] || 0) < WAIT_MS) return 'pending';
+  return x.their.pct >= st.S.matchCut ? 'accepted' : 'declined';
+}
+const contactOf = p => p.contact || `match_${p.id}${p.age}`;
+const contactBox = x => `<div class="contact"><span>📱 카톡 ID</span><b>${esc(contactOf(x.p))}</b><button class="pass" data-copy="${esc(contactOf(x.p))}">복사</button></div>
+  ${x.p.contact ? '' : '<div class="small muted" style="margin-top:4px">가상 프로필이라 예시 ID예요. 친구 등록 창에서 넣은 연락처는 그대로 보여요.</div>'}`;
+const iceHTML = x => iceBreakers(x).map(q => `<div class="ice"><span>${esc(q)}</span><button class="pass" data-copy="${esc(q)}">복사</button></div>`).join('');
+let waitTimer = null;
+const scheduleRecheck = () => { clearTimeout(waitTimer); waitTimer = setTimeout(render, WAIT_MS + 100); };
+
+// 추천 순위 목록의 버튼
 function acts(x) {
   if (!st.logicDone) return '';
-  const id = esc(x.p.id);
-  if (st.likes[x.p.id] === 'like') {
-    const ok = x.their.pct >= st.S.matchCut;
-    return `<div class="acts"><span class="state ${ok ? 'ok' : ''}">${ok ? '💌 매칭 성사' : `⏳ 상대 반응 없음 (상대 점수 ${x.their.pct}%)`}</span>
-      <button class="pass" data-unlike="${id}">좋아요 취소</button></div>`;
-  }
-  return `<div class="acts"><button class="like" data-like="${id}">♥ 좋아요</button><button class="pass" data-pass="${id}">✕ 패스</button></div>`;
+  const id = esc(x.p.id), s = reqState(x);
+  if (s) return `<div class="acts"><span class="state ${s === 'accepted' ? 'ok' : ''}">${STATE_TEXT[s]}</span>
+    ${s === 'pending' ? '' : `<button class="pass" data-unlike="${id}">요청 취소</button>`}</div>`;
+  return `<div class="acts"><button class="like" data-like="${id}">💌 매칭 요청</button><button class="pass" data-pass="${id}">✕ 패스</button></div>`;
 }
 document.addEventListener('click', e => {
   const d = e.target.closest('button')?.dataset;
   if (!d) return;
-  if (d.like) { st.likes[d.like] = 'like'; lastLiked = d.like; }
-  else if (d.pass) { st.likes[d.pass] = 'pass'; lastLiked = null; }
+  if (d.like) {
+    st.likes[d.like] = 'like';
+    (st.reqAt = st.reqAt || {})[d.like] = Date.now();
+    (st.reqFrom = st.reqFrom || {})[d.like] = d.deck || 'list';
+    if (d.deck) last[d.deck] = d.like;
+  }
+  else if (d.pass) st.likes[d.pass] = 'pass';
   else if (d.unlike || d.unpass) delete st.likes[d.unlike || d.unpass];
-  else if ('next' in d) lastLiked = null;
-  else if ('restart' in d) { st.likes = {}; lastLiked = null; }
+  else if ('next' in d) last[d.next || 'best'] = null;
+  else if ('restart' in d) { st.likes = {}; st.reqAt = {}; st.reqFrom = {}; last = { best: null, worst: null }; }
   else if (d.copy) { navigator.clipboard?.writeText(d.copy); e.target.textContent = '복사됨 ✓'; return; }
   else return;
   save(); render();
 });
-document.addEventListener('keydown', e => {   // ← 패스, → 좋아요 (입력칸 밖에서)
+document.addEventListener('keydown', e => {   // 잘 맞는 쪽 카드: ← 패스, → 매칭 요청, Enter 다음
   if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
-  const btn = document.querySelector(e.key === 'ArrowRight' ? '#deck [data-like]' : e.key === 'ArrowLeft' ? '#deck [data-pass]' : '#deck [data-next]');
-  if (btn && (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'Enter')) { e.preventDefault(); btn.click(); }
+  const sel = { ArrowRight: '#deckBest [data-like]', ArrowLeft: '#deckBest [data-pass]', Enter: '#deckBest [data-next]' }[e.key];
+  const btn = sel && document.querySelector(sel);
+  if (btn) { e.preventDefault(); btn.click(); }
 });
 
-// 좋아요 → 매칭 성사 / 응답 대기 (오늘의 소개 옆)
+// 📬 매칭 요청함
 function renderMatches(passed) {
-  const liked = passed.filter(x => st.likes[x.p.id] === 'like');
-  const matched = liked.filter(x => x.their.pct >= st.S.matchCut), waiting = liked.filter(x => x.their.pct < st.S.matchCut);
-  $('matches').innerHTML = `<div class="card"><h3>💌 매칭 성사 ${matched.length}명 <span class="small muted">상대가 나를 보는 점수 ${st.S.matchCut}% 이상</span></h3>
-    ${liked.length ? '' : '<p class="muted small" style="margin:0">아직 좋아요한 사람이 없어요. 왼쪽 카드에서 ♥를 눌러보세요.</p>'}
-    ${matched.map(x => `<div class="matchcard"><b>${esc(x.p.name)}</b> <span class="mutual">서로 맞는 정도 <b>${x.mutual}%</b> · 상대가 나를 보는 점수 ${x.their.pct}%</span>
-      <div class="small muted" style="margin-top:6px">대화 시작 질문</div><ul>${iceBreakers(x).map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>`).join('')}
-    ${waiting.length ? `<div class="small muted" style="margin-top:10px">⏳ 상대 반응 없음: ${waiting.map(x => `${esc(x.p.name)} (상대 점수 ${x.their.pct}%)`).join(', ')}</div>` : ''}</div>`;
+  const reqs = passed.filter(x => st.likes[x.p.id] === 'like');
+  const acc = reqs.filter(x => reqState(x) === 'accepted').length;
+  const from = { best: ['잘 맞는 쪽', ''], worst: ['안 맞는 쪽', 'bad'], list: ['순위 목록', ''] };
+  $('matches').innerHTML = `<div class="card"><h3>📬 매칭 요청함 <span class="small muted">보낸 요청 ${reqs.length} · 수락 ${acc}</span></h3>
+    ${reqs.length ? '' : `<p class="muted small" style="margin:0">위 카드에서 💌 매칭 요청을 보내보세요. 상대가 나를 보는 점수가 ${st.S.matchCut}% 이상이면 수락하고, 그때부터 연락할 수 있어요.</p>`}
+    <div class="reqlist">${reqs.map(x => {
+      const s = reqState(x), [fl, fc] = from[(st.reqFrom || {})[x.p.id] || 'list'];
+      return `<div class="req ${s}"><div class="req-top"><b>${esc(x.p.name)}</b><span class="tagmini ${fc}">${fl}</span>
+          <span class="state ${s === 'accepted' ? 'ok' : ''}">${STATE_TEXT[s]}</span></div>
+        <div class="small muted">서로 맞는 정도 ${x.mutual}% · 상대가 나를 보는 점수 ${x.their.pct}%</div>
+        ${s === 'accepted' ? contactBox(x) + `<details class="small" style="margin-top:6px"><summary>첫 마디 추천</summary>${iceHTML(x)}</details>` : ''}
+        ${s === 'declined' ? `<div class="small" style="color:var(--red);margin-top:4px">수락 기준 ${st.S.matchCut}%에 못 미쳐서 연락할 수 없어요</div>` : ''}</div>`;
+    }).join('')}</div></div>`;
 }
 
 /* ---------- 로직 완성 → 오늘의 소개 열기 ---------- */
 $('logicDone').onclick = () => {
-  st.logicDone = true; st.likes = {}; lastLiked = null;   // 새 로직으로 처음부터
+  st.logicDone = true; st.likes = {}; st.reqAt = {}; st.reqFrom = {}; last = { best: null, worst: null };   // 새 로직으로 처음부터
   save(); render();
   document.getElementById('s3').scrollIntoView({ behavior: 'smooth' });
 };
 
-/* ---------- 오늘의 소개: 한 명씩 카드로 ---------- */
-let lastLiked = null;
+/* ---------- 오늘의 소개: 잘 맞는 쪽 / 안 맞는 쪽 카드 ---------- */
+let last = { best: null, worst: null };   // 각 카드에서 방금 요청 보낸 사람
 const gauge = (label, v, cls) => `<div class="gauge"><span>${label}</span><div class="bar"><i class="${cls}" style="width:${v}%"></i></div><b>${v}%</b></div>`;
 function renderDeck(passed) {
   $('logicDone').textContent = st.logicDone ? '↻ 바뀐 로직으로 오늘의 소개 다시 받기' : '✔ 로직 완성 → 오늘의 소개 받기';
   $('doneHint').textContent = st.logicDone ? '로직을 고쳤다면 다시 눌러 처음부터 소개받아요' : '완성하면 이 로직으로 오늘의 소개가 시작돼요';
   if (!st.logicDone) {
-    $('deckLeft').textContent = '';
-    $('deck').innerHTML = `<div class="dresult locked"><div class="big">🔒 아직 잠겨 있어요</div>
-      <p>② 내 로직을 다 만들고 <b>로직 완성</b>을 누르면, 그 로직으로 고른 순서대로 한 명씩 소개해 드려요.</p>
-      <a class="nextlink" href="#s2">② 내 로직 만들러 가기 →</a></div>`;
-    $('matches').innerHTML = `<div class="card"><h3>💌 매칭 성사</h3><p class="muted small" style="margin:0">오늘의 소개에서 ♥를 누르면 여기에 결과가 쌓여요.</p></div>`;
+    const lock = `<div class="dresult locked"><div class="big">🔒 아직 잠겨 있어요</div>
+      <p>② 내 로직을 다 만들고 <b>로직 완성</b>을 누르면 열려요.</p><a class="nextlink" href="#s2">② 내 로직 만들러 가기 →</a></div>`;
+    $('deckBest').innerHTML = $('deckWorst').innerHTML = lock;
+    $('leftBest').textContent = $('leftWorst').textContent = '';
+    $('matches').innerHTML = `<div class="card"><h3>📬 매칭 요청함</h3><p class="muted small" style="margin:0">오늘의 소개에서 💌 매칭 요청을 보내면 여기에 쌓여요.</p></div>`;
     return;
   }
   renderMatches(passed);
-  const queue = passed.filter(x => !st.likes[x.p.id]);
-  // 패스한 사람은 거르기에서 빠지므로 따로 세서 전체 카드 수에 더한다
-  const passCnt = st.profiles.filter(p => st.likes[p.id] === 'pass').length;
-  const total = passed.length + passCnt, seen = total - queue.length;
-  $('deckLeft').textContent = total ? `${Math.min(seen + 1, total)} / ${total}` : '';
+  if (passed.some(x => reqState(x) === 'pending')) scheduleRecheck();
+  renderOne('best', passed, passed);
+  renderOne('worst', [...passed].reverse(), passed);
+}
 
-  // 방금 ♥ 누른 사람의 결과 화면
-  const hit = lastLiked && passed.find(x => x.p.id === lastLiked);
+function renderOne(kind, order, passed) {
+  const el = $(kind === 'best' ? 'deckBest' : 'deckWorst');
+  const queue = order.filter(x => !st.likes[x.p.id]);
+  $(kind === 'best' ? 'leftBest' : 'leftWorst').textContent = queue.length ? `남은 ${queue.length}명` : '';
+
+  // 방금 요청 보낸 사람의 결과
+  const hit = last[kind] && passed.find(x => x.p.id === last[kind]);
   if (hit) {
-    const ok = hit.their.pct >= st.S.matchCut;
-    const weak = hit.their.items.filter(i => i.pts === 0).map(i => `${i.label}(${esc(i.detail)})`);
-    $('deck').innerHTML = ok
-      ? `<div class="dresult ok"><div class="big">💌 매칭 성사!</div>
-          <p><b>${esc(hit.p.name)}</b>님도 나를 <b>${hit.their.pct}%</b> 마음에 들어해요. 서로 맞는 정도 <b>${hit.mutual}%</b></p>
-          <div class="small muted">이렇게 말을 걸어보세요</div>
-          ${iceBreakers(hit).map(q => `<div class="ice"><span>${esc(q)}</span><button class="pass" data-copy="${esc(q)}">복사</button></div>`).join('')}
-          <button data-next style="margin-top:12px;width:100%">다음 사람 보기 →</button></div>`
-      : `<div class="dresult"><div class="big">⏳ 아직 반응이 없어요</div>
-          <p><b>${esc(hit.p.name)}</b>님이 나를 보는 점수는 <b>${hit.their.pct}%</b>로 기준(${st.S.matchCut}%)보다 낮아요.</p>
-          ${weak.length ? `<p class="small muted">상대 쪽에서 0점이었던 곳: ${weak.join(', ')}</p>` : ''}
-          <button data-next style="margin-top:8px;width:100%">다음 사람 보기 →</button></div>`;
+    const s = reqState(hit), nm = esc(hit.p.name);
+    const next = `<button data-next="${kind}" style="margin-top:12px;width:100%">다음 사람 보기 →</button>`;
+    if (s === 'pending') el.innerHTML = `<div class="dresult"><div class="big">📨 매칭 요청을 보냈어요</div>
+      <p><b>${nm}</b>님이 요청을 확인하고 있어요</p><div class="dots"><i></i><i></i><i></i></div></div>`;
+    else if (s === 'accepted') el.innerHTML = `<div class="dresult ok"><div class="big">💌 ${nm}님이 수락했어요!</div>
+      <p>이제 연락할 수 있어요. ${kind === 'worst' ? '안 맞는다던 사람이 수락하다니, 반전이네요 😮' : `서로 맞는 정도 <b>${hit.mutual}%</b>`}</p>
+      ${contactBox(hit)}<div class="small muted" style="margin-top:10px">첫 마디 추천</div>${iceHTML(hit)}${next}</div>`;
+    else {
+      const weak = hit.their.items.filter(i => i.pts === 0).map(i => `${i.label}(${esc(i.detail)})`);
+      el.innerHTML = `<div class="dresult no"><div class="big">🙅 ${nm}님이 거절했어요</div>
+        <p>상대가 나를 보는 점수가 <b>${hit.their.pct}%</b>로 수락 기준(${st.S.matchCut}%)보다 낮아서 연락할 수 없어요.</p>
+        ${weak.length ? `<p class="small muted">상대 쪽에서 0점이었던 곳: ${weak.join(', ')}</p>` : ''}${next}</div>`;
+    }
     return;
   }
 
   if (!queue.length) {
-    const likes = passed.filter(x => st.likes[x.p.id] === 'like');
-    const m = likes.filter(x => x.their.pct >= st.S.matchCut).length;
-    $('deck').innerHTML = `<div class="dresult"><div class="big">${total ? '오늘의 소개를 모두 봤어요' : '소개할 사람이 없어요'}</div>
-      <p>좋아요 ${likes.length}명 · 매칭 성사 <b>${m}명</b> · 패스 ${passCnt}명</p>
-      ${total ? '<button data-restart style="width:100%">처음부터 다시 보기</button>' : '<p class="small muted">② 거르기 조건을 완화하거나 친구 프로필을 올려주세요.</p>'}</div>`;
+    const mine = Object.entries(st.reqFrom || {}).filter(([id, k]) => k === kind && st.likes[id] === 'like').map(([id]) => passed.find(x => x.p.id === id)).filter(Boolean);
+    el.innerHTML = `<div class="dresult"><div class="big">${passed.length ? (kind === 'best' ? '잘 맞는' : '안 맞는') + ' 쪽 소개를 모두 봤어요' : '소개할 사람이 없어요'}</div>
+      <p>이쪽에서 보낸 요청 ${mine.length}개 · 수락 <b>${mine.filter(x => reqState(x) === 'accepted').length}명</b></p>
+      ${passed.length ? '<button data-restart style="width:100%">처음부터 다시 보기</button>' : '<p class="small muted">② 거르기 조건을 완화하거나 친구 프로필을 올려주세요.</p>'}</div>`;
     return;
   }
 
-  const x = queue[0], p = x.p, mine = st.me.interests;
-  $('deck').innerHTML = `<div class="dcard">
-    <div class="rankpill">내 로직 ${passed.indexOf(x) + 1}위</div>
+  const x = queue[0], p = x.p, my = st.me.interests, rank = passed.indexOf(x) + 1, fromEnd = passed.length - rank + 1;
+  const bad = kind === 'worst', zero = x.items.filter(i => i.pts === 0);
+  el.innerHTML = `<div class="dcard">
+    ${bad ? `<div class="rankpill bad">내 로직 꼴찌${fromEnd > 1 ? `에서 ${fromEnd}번째` : ''} · ${rank}위</div>` : `<div class="rankpill">내 로직 ${rank}위</div>`}
     <div class="dtop"><div><div class="dname">${esc(p.name)} <span>${p.age}</span></div>
       <div class="small muted">${p.region} · ${p.height}cm · ${p.style} · ${p.smoke ? '흡연' : '비흡연'} · 술 ${p.drink}</div></div>
-      <div class="dpct">${x.mutual}%<small>서로 맞는 정도</small></div></div>
+      <div class="dpct ${bad ? 'bad' : ''}">${x.mutual}%<small>서로 맞는 정도</small></div></div>
     ${p.intro ? `<div class="dintro">“${esc(p.intro)}”</div>` : ''}
-    <div class="chips" style="margin:8px 0">${p.interests.map(i => `<span class="tag ${mine.includes(i) ? 'same' : ''}">${esc(i)}${mine.includes(i) ? ' ✓' : ''}</span>`).join('')}</div>
+    <div class="chips" style="margin:8px 0">${p.interests.map(i => `<span class="tag ${my.includes(i) ? 'same' : ''}">${esc(i)}${my.includes(i) ? ' ✓' : ''}</span>`).join('')}</div>
     <div class="small" style="color:var(--lime)">${esc(mbtiText(p))} · ${traitText(p)}</div>
     ${p.recommend ? `<div class="rec">🤝 주선자 <b>${esc(p.matchmaker || '친구')}</b>: “${esc(p.recommend)}”</div>` : ''}
+    ${bad && zero.length ? `<div class="whybad"><b>왜 안 맞나?</b> ${zero.slice(0, 4).map(i => `${i.label}(${esc(i.detail)})`).join(' · ')}</div>` : ''}
     <div style="margin-top:10px">${gauge('내가 볼 때', x.minePct, '')}${gauge('상대가 볼 때', x.their.pct, 'pink')}</div>
     <details class="small"><summary>상대 입장에서 나는 몇 점?</summary>
       ${x.their.items.map(i => `<div class="drop"><b>${i.label}</b><span class="${i.pts ? '' : 'r'}">+${i.pts} · ${esc(i.detail)}</span></div>`).join('')}</details>
-    <div class="dacts"><button class="no" data-pass="${esc(p.id)}" title="← 키">✕ 패스</button><button class="yes" data-like="${esc(p.id)}" title="→ 키">♥ 좋아요</button></div>
-    <div class="small muted" style="text-align:center;margin-top:6px">키보드 ← 패스 · → 좋아요</div>
+    <div class="dacts"><button class="no" data-pass="${esc(p.id)}" data-deck="${kind}">✕ 패스</button><button class="yes" data-like="${esc(p.id)}" data-deck="${kind}">💌 매칭 요청</button></div>
+    ${bad ? '' : '<div class="small muted" style="text-align:center;margin-top:6px">키보드 ← 패스 · → 매칭 요청</div>'}
   </div>`;
 }
 render();

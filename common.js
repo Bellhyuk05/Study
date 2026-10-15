@@ -186,6 +186,7 @@ function formHTML(px) {
     <label>원하는 나이 (최대)<input type="number" id="${px}-prefAgeMax"></label>
     <label>흡연자는?<select id="${px}-prefNoSmoker"><option value="1">싫어함</option><option value="0">상관없음</option></select></label>
     <label>주선자 (내 이름)<input id="${px}-matchmaker" maxlength="10"></label>
+    <label>연락처 (카톡 ID)<input id="${px}-contact" maxlength="30" placeholder="수락하면 상대에게 보여요"></label>
   </div>
   <label class="full">주선자 추천 한마디<input id="${px}-recommend" maxlength="60" placeholder="예) 리액션 최고, 같이 있으면 편한 친구예요"></label>`}`;
 }
@@ -197,13 +198,13 @@ function readForm(px) {
     interests: [...document.querySelectorAll(`#${px}-interests input:checked`)].map(x => x.value), intro: v('intro').trim(),
     mbti: v('mbti'), answers: readAnswers(px),
     ...($(px + '-prefAgeMin') ? { prefAgeMin: +v('prefAgeMin') || 0, prefAgeMax: +v('prefAgeMax') || 99, prefNoSmoker: v('prefNoSmoker') === '1',
-      matchmaker: v('matchmaker').trim(), recommend: v('recommend').trim() } : {}) };
+      matchmaker: v('matchmaker').trim(), recommend: v('recommend').trim(), contact: v('contact').trim() } : {}) };
 }
 function fillForm(px, p) {
   for (const k of ['name', 'gender', 'age', 'height', 'region', 'religion', 'drink', 'style', 'income', 'intro']) $(px + '-' + k).value = p[k] ?? '';
   $(px + '-mbti').value = p.mbti || '모름';
   if ($(px + '-prefAgeMin')) {
-    for (const k of ['prefAgeMin', 'prefAgeMax', 'matchmaker', 'recommend']) $(px + '-' + k).value = p[k] ?? '';
+    for (const k of ['prefAgeMin', 'prefAgeMax', 'matchmaker', 'recommend', 'contact']) $(px + '-' + k).value = p[k] ?? '';
     $(px + '-prefNoSmoker').value = p.prefNoSmoker === false ? '0' : '1';
   }
   QUESTIONS.forEach((_, i) => document.querySelectorAll(`input[name="${px}-q${i}"]`).forEach(r => r.checked = (p.answers || '')[i] === r.value));
