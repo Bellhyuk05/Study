@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>소개팅 매칭 로직</title>
-<link rel="stylesheet" href="common.css?v=9">
+<link rel="stylesheet" href="common.css?v=11">
 </head>
 <body>
 <div class="topbar"><div class="tb-in">
   <a class="brand" href="#top">💘 매칭 로직</a>
-  <nav class="steps"><a href="#s1"><i>1</i>올린다</a><a href="#s2"><i>2</i>내 로직</a><a href="#s3"><i>3</i>오늘의 소개</a><a href="#s4"><i>4</i>추천 이유</a></nav>
+  <nav class="steps" id="steps"><a href="#s1" data-go="1"><i>1</i>올린다</a><a href="#s2" data-go="2"><i>2</i>내 로직</a><a href="#s3" data-go="3"><i>3</i>오늘의 소개</a><a href="#s4" data-go="4"><i>4</i>추천 이유</a></nav>
   <button id="openFriend" class="topbtn" title="친구 프로필을 별도 창에서 입력해요">친구 대신 올리기 ↗ <span id="friendCnt" class="fc"></span></button>
 </div></div>
 
@@ -33,7 +33,6 @@
     <div class="card sidecard">
       <h3>내 성향 결과</h3>
       <div id="myType"></div>
-      <a class="nextlink" href="#s2">다 채웠으면 ② 내 로직 만들기 →</a>
     </div>
   </div>
   <details class="card fold">
@@ -44,6 +43,7 @@
     </div>
     <div id="store" class="store"></div>
   </details>
+  <div class="stepnav"><span></span><button data-go="2">다음: ② 내 로직 만들기 →</button></div>
 </section>
 
 <!-- ② 내 로직 -->
@@ -108,6 +108,7 @@
     <div><b>내 로직을 다 만들었나요?</b><span id="doneHint">완성하면 이 로직으로 오늘의 소개가 시작돼요</span></div>
     <button id="logicDone">✔ 로직 완성 → 오늘의 소개 받기</button>
   </div>
+  <div class="stepnav"><button class="ghost" data-go="1">← 이전: ① 올린다</button><button class="ghost" data-go="3">③ 오늘의 소개 →</button></div>
 </section>
 
 <!-- ③ 오늘의 소개 -->
@@ -124,18 +125,123 @@
     </div>
   </div>
   <div id="matches" style="margin-top:16px"></div>
+  <div class="stepnav"><button class="ghost" data-go="2">← 이전: ② 내 로직</button><button data-go="4">다음: ④ 추천 이유 보기 →</button></div>
 </section>
 
 <!-- ④ 추천하고, 보여준다 -->
 <section id="s4">
   <div class="sec-head"><h2><span class="num">4</span>추천하고, 보여준다</h2><p>누구를 왜 1위로 골랐는지 화면이 말해줍니다</p></div>
   <div id="result"></div>
+  <div class="stepnav"><button class="ghost" data-go="3">← 이전: ③ 오늘의 소개</button><button class="ghost" data-go="1">처음으로 ↺</button></div>
 </section>
 </main>
 <footer>바이브코딩 · 소개팅 매칭 실습 4 — 데이터는 이 브라우저에만 저장됩니다</footer>
 
 <script src="common.js?v=9"></script>
 <script>
+/* ---------- 단계별 화면: 한 번에 한 단계만 보여준다 ---------- */
+function go(n, push = true) {
+  n = Math.min(4, Math.max(1, +n || 1));
+  document.body.dataset.step = n;
+  document.querySelectorAll('main > section').forEach(s => s.classList.toggle('on', s.id === 's' + n));
+  document.querySelectorAll('#steps a').forEach(a => {
+    a.classList.toggle('on', +a.dataset.go === n);
+    a.classList.toggle('done', +a.dataset.go < n);
+  });
+  if (push && location.hash !== '#s' + n) history.pushState(null, '', '#s' + n);
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-go]');
+  if (!t) return;
+  e.preventDefault();
+  go(t.dataset.go);
+});
+window.addEventListener('popstate', () => go(location.hash.replace('#s', ''), false));
+go(location.hash.replace('#s', ''), false);
+
+/* ---------- AI(Claude) — 매칭 이유·첫 마디 생성 (server.py가 켜져 있을 때만) ---------- */
+let aiStatus = { ai: false, checking: true };
+fetch('/api/status').then(r => r.json()).then(s => aiStatus = s)
+  .catch(() => aiStatus = { ai: false, offline: true }).finally(() => render());
+const AI = {};   // 키별 결과 캐시 { loading } | { data } | { error }
+const slim = p => ({ 이름: p.name, 성별: p.gender, 나이: p.age, 키: p.height, 지역: p.region, 종교: p.religion,
+  흡연: p.smoke ? '흡연' : '비흡연', 음주: p.drink, 관심사: p.interests,
+  MBTI: mbtiText(p), 연애성향: traitText(p), 자기소개: p.intro || '', 주선자추천: p.recommend || '' });
+function aiCall(key, url, body) {
+  if (AI[key]?.loading) return;
+  AI[key] = { loading: true }; render();
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(async r => { const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); AI[key] = { data: j }; })
+    .catch(err => AI[key] = { error: err.message || '요청 실패' })
+    .finally(render);
+}
+const aiOffMsg = () => aiStatus.checking ? '' : aiStatus.offline
+  ? '<p class="small muted">AI 기능은 <b>python server.py</b>로 실행했을 때만 켜져요.</p>'
+  : aiStatus.provider === 'ollama'
+  ? `<p class="small muted">Ollama가 꺼져 있거나 <b>${esc(aiStatus.model)}</b> 모델이 없어요 — Ollama 앱을 켜고 <b>ollama create ${esc(aiStatus.model)} -f Modelfile</b>을 실행해 주세요.</p>`
+  : '<p class="small muted">서버에 API 키가 없어요 — .env 파일에 ANTHROPIC_API_KEY를 넣어 주세요.</p>';
+const aiName = () => aiStatus.model ? `<span class="small muted">${aiStatus.provider === 'ollama' ? '내 PC · ' : ''}${esc(aiStatus.model)}</span>` : '';
+const aiWait = () => aiStatus.provider === 'ollama' ? ' (내 PC에서 돌아서 수십 초 걸릴 수 있어요)' : '';
+
+// 1위 매칭 이유
+const explainKey = (a) => `ex:${a.p.id}:${a.mutual}:${a.total}`;
+function aiExplainHTML(passed) {
+  const a = passed[0], k = explainKey(a), s = AI[k];
+  let body;
+  if (!aiStatus.ai) body = aiOffMsg();
+  else if (!s) body = `<button class="ghost" data-ai-explain>🤖 AI에게 매칭 이유 물어보기</button>`;
+  else if (s.loading) body = `<p class="muted">AI가 점수표를 읽고 있어요${aiWait()}… <span class="dots"><i></i><i></i><i></i></span></p>`;
+  else if (s.error) body = `<p class="small" style="color:var(--red)">${esc(s.error)}</p><button class="ghost" data-ai-explain>다시 시도</button>`;
+  else body = `<p style="margin:0 0 8px"><b>${esc(s.data.summary)}</b></p>
+    <ul>${s.data.points.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+    <p class="small muted" style="margin:8px 0 0">💭 ${esc(s.data.caution)}</p>`;
+  return `<div class="aibox"><h4>🤖 AI 주선자의 설명 ${aiName()}</h4>${body}</div>`;
+}
+// AI에 보내는 점수표 (내 로직 계산 결과). 외모·연봉은 AI가 사람을 평가하는 말을 하지 않도록 빼고 보낸다
+const AI_HIDE = ['외모', '연봉'];
+const scorePayload = x => ({
+  me: slim(st.me), partner: slim(x.p), mutual: x.mutual,
+  items: x.items.filter(i => !AI_HIDE.includes(i.label)).map(i => ({ 항목: i.label, 점수: i.pts, 만점: i.max, 근거: i.detail })),
+  their: x.their.items.map(i => ({ 항목: i.label, 점수: i.pts, 근거: i.detail })),
+});
+
+// ③ 오늘의 소개 카드의 AI 멘트 — 카드가 열리면 자동으로 만든다 (Claude든 Ollama든 같은 방식)
+const cardKey = (kind, x) => `card:${kind}:${x.p.id}:${x.mutual}`;
+function cardAI(kind, x, rank) {
+  if (!aiStatus.ai) return '';
+  const k = cardKey(kind, x), s = AI[k], bad = kind === 'worst';
+  const ask = () => aiCall(k, '/api/intro', { ...scorePayload(x), kind, rank });
+  if (!s) setTimeout(() => !AI[k] && ask());   // 그리기가 끝난 뒤 요청
+  cardAsk[k] = ask;
+  const head = `<b>💬 ${bad ? '왜 안 맞을까요?' : '왜 잘 맞을까요?'}</b>`;
+  if (!s) return `<button class="ghost aiice" data-ai-card="${esc(k)}">💬 ${bad ? '왜 안 맞을까요?' : '왜 잘 맞을까요?'} — AI 주선자에게 듣기</button>`;
+  if (s.loading) return `<div class="aicard">${head}<p class="small muted" style="margin:4px 0 0">AI 주선자가 소개를 쓰는 중${aiWait()}… <span class="dots"><i></i><i></i><i></i></span></p></div>`;
+  if (s.error) return `<div class="aicard">${head}<p class="small" style="color:var(--red);margin:4px 0">${esc(s.error)}</p><button class="ghost" data-ai-card="${esc(k)}">다시 시도</button></div>`;
+  return `<div class="aicard ${bad ? 'bad' : ''}">${head}<p style="margin:4px 0">${esc(s.data.intro)}</p>
+    <p class="small muted" style="margin:0">${bad ? '🤝 그래도 ' : '☕ '}${esc(s.data.plus)}</p></div>`;
+}
+const cardAsk = {};
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.aiCard) {
+    delete AI[b.dataset.aiCard];
+    cardAsk[b.dataset.aiCard]?.();
+  } else if ('aiExplain' in b.dataset) {
+    const { passed } = compute(), a = passed[0], b2 = passed[1];
+    if (!a) return;
+    aiCall(explainKey(a), '/api/explain', {
+      ...scorePayload(a), rank: 1,
+      second: b2 ? { 이름: b2.p.name, 서로맞는정도: b2.mutual } : null,
+    });
+  } else if (b.dataset.aiIce) {
+    const x = compute().passed.find(x => x.p.id === b.dataset.aiIce);
+    if (x) aiCall('ice:' + x.p.id, '/api/icebreakers', { me: slim(st.me), partner: slim(x.p) });
+  }
+});
+
 $('meForm').innerHTML = formHTML('me');
 fillForm('me', st.me);
 
@@ -416,7 +522,8 @@ function render() {
         ${mutualMode() ? `<div class="score">${a.mutual}<small>%</small><div class="small muted" style="font-weight:500">서로 맞는 정도<br>내 점수 ${a.total}/${max}</div></div>`
           : `<div class="score">${a.total}<small> / ${max}점</small></div>`}
       </div>
-      <div class="why"><h4>왜 이 사람이 1위인가?</h4><ul>${explain(passed, max).map(l => `<li>${l}</li>`).join('')}</ul></div>
+      ${aiExplainHTML(passed)}
+      <div class="why"><h4>왜 이 사람이 1위인가? <span class="small muted">(내 로직 계산)</span></h4><ul>${explain(passed, max).map(l => `<li>${l}</li>`).join('')}</ul></div>
       <div class="ok-line">✔ 1위의 이유를 화면이 말해줍니다</div>
     </div>`;
 
@@ -463,7 +570,14 @@ function reqState(x) {
 const contactOf = p => p.contact || `match_${p.id}${p.age}`;
 const contactBox = x => `<div class="contact"><span>📱 카톡 ID</span><b>${esc(contactOf(x.p))}</b><button class="pass" data-copy="${esc(contactOf(x.p))}">복사</button></div>
   ${x.p.contact ? '' : '<div class="small muted" style="margin-top:4px">가상 프로필이라 예시 ID예요. 친구 등록 창에서 넣은 연락처는 그대로 보여요.</div>'}`;
-const iceHTML = x => iceBreakers(x).map(q => `<div class="ice"><span>${esc(q)}</span><button class="pass" data-copy="${esc(q)}">복사</button></div>`).join('');
+const iceRow = q => `<div class="ice"><span>${esc(q)}</span><button class="pass" data-copy="${esc(q)}">복사</button></div>`;
+function iceHTML(x) {
+  const s = AI['ice:' + x.p.id];
+  if (s?.data) return `<div class="small" style="color:var(--lime);margin-top:4px">🤖 AI가 만든 첫 마디</div>` + s.data.questions.map(iceRow).join('');
+  const btn = !aiStatus.ai ? '' : s?.loading ? `<p class="small muted">AI가 첫 마디를 고르는 중${aiWait()}… <span class="dots"><i></i><i></i><i></i></span></p>`
+    : `${s?.error ? `<p class="small" style="color:var(--red)">${esc(s.error)}</p>` : ''}<button class="ghost aiice" data-ai-ice="${esc(x.p.id)}">🤖 AI로 첫 마디 만들기</button>`;
+  return iceBreakers(x).map(iceRow).join('') + btn;
+}
 let waitTimer = null;
 const scheduleRecheck = () => { clearTimeout(waitTimer); waitTimer = setTimeout(render, WAIT_MS + 100); };
 
@@ -520,7 +634,7 @@ function renderMatches(passed) {
 $('logicDone').onclick = () => {
   st.logicDone = true; st.likes = {}; st.reqAt = {}; st.reqFrom = {}; last = { best: null, worst: null };   // 새 로직으로 처음부터
   save(); render();
-  document.getElementById('s3').scrollIntoView({ behavior: 'smooth' });
+  go(3);
 };
 
 /* ---------- 오늘의 소개: 잘 맞는 쪽 / 안 맞는 쪽 카드 ---------- */
@@ -531,7 +645,7 @@ function renderDeck(passed) {
   $('doneHint').textContent = st.logicDone ? '로직을 고쳤다면 다시 눌러 처음부터 소개받아요' : '완성하면 이 로직으로 오늘의 소개가 시작돼요';
   if (!st.logicDone) {
     const lock = `<div class="dresult locked"><div class="big">🔒 아직 잠겨 있어요</div>
-      <p>② 내 로직을 다 만들고 <b>로직 완성</b>을 누르면 열려요.</p><a class="nextlink" href="#s2">② 내 로직 만들러 가기 →</a></div>`;
+      <p>② 내 로직을 다 만들고 <b>로직 완성</b>을 누르면 열려요.</p><a class="nextlink" href="#s2" data-go="2">② 내 로직 만들러 가기 →</a></div>`;
     $('deckBest').innerHTML = $('deckWorst').innerHTML = lock;
     $('leftBest').textContent = $('leftWorst').textContent = '';
     $('matches').innerHTML = `<div class="card"><h3>📬 매칭 요청함</h3><p class="muted small" style="margin:0">오늘의 소개에서 💌 매칭 요청을 보내면 여기에 쌓여요.</p></div>`;
@@ -587,6 +701,7 @@ function renderOne(kind, order, passed) {
     <div class="small" style="color:var(--lime)">${esc(mbtiText(p))} · ${traitText(p)}</div>
     ${p.recommend ? `<div class="rec">🤝 주선자 <b>${esc(p.matchmaker || '친구')}</b>: “${esc(p.recommend)}”</div>` : ''}
     ${bad && zero.length ? `<div class="whybad"><b>왜 안 맞나?</b> ${zero.slice(0, 4).map(i => `${i.label}(${esc(i.detail)})`).join(' · ')}</div>` : ''}
+    ${cardAI(kind, x, rank)}
     <div style="margin-top:10px">${gauge('내가 볼 때', x.minePct, '')}${gauge('상대가 볼 때', x.their.pct, 'pink')}</div>
     <details class="small"><summary>상대 입장에서 나는 몇 점?</summary>
       ${x.their.items.map(i => `<div class="drop"><b>${i.label}</b><span class="${i.pts ? '' : 'r'}">+${i.pts} · ${esc(i.detail)}</span></div>`).join('')}</details>

@@ -8,6 +8,25 @@
 설치할 것 없이 `index.html`을 브라우저로 열면 됩니다. (파일 4개가 같은 폴더에 있어야 해요)
 입력한 데이터는 브라우저(localStorage)에만 저장됩니다.
 
+### AI 기능까지 켜서 실행 (매칭 이유·첫 마디를 Claude가 생성)
+
+```bash
+pip install -r requirements.txt
+copy .env.example .env      # .env 안에 ANTHROPIC_API_KEY 넣기
+python server.py            # → http://localhost:8766
+```
+
+**무료로 내 PC 모델 쓰기 (Ollama):** `.env`에 `LLM=ollama`를 넣고, 소개팅 전용 모델을 한 번 등록하세요.
+
+```bash
+ollama create sogaeting-ai -f Modelfile
+```
+
+`Modelfile`에 주선자 역할·말투 규칙이 들어 있어요. CPU로 돌면 답 하나에 10~40초쯤 걸려요.
+
+API 키는 브라우저에 가지 않고 `server.py`만 읽습니다. 모델은 `.env`의 `CLAUDE_MODEL`로 바꿀 수 있어요.
+배포할 때는 시작 명령을 `gunicorn server:app --bind 0.0.0.0:$PORT`로 하고, 키는 호스팅 서비스의 환경변수에 넣으세요.
+
 ## 흐름
 
 1. **올린다** — 내 프로필(나이·키·지역·종교·흡연·음주·외모·연봉·MBTI·관심사) + 성향 질문 10개.
@@ -35,5 +54,7 @@
 | `friend.html` | 친구 프로필 등록 창 |
 | `common.js` | 공통 데이터·질문·MBTI 궁합표·폼 |
 | `common.css` | 공통 스타일 |
+| `server.py` | 파이썬(Flask) 백엔드 — 화면 서빙 + AI 호출 (Claude 또는 Ollama) |
+| `Modelfile` | Ollama 소개팅 전용 모델 `sogaeting-ai` 정의 |
 
 > MBTI 궁합표는 국내 커뮤니티에서 널리 공유되는 표(원본 출처 불명)를 옮긴 재미용 기준입니다.
