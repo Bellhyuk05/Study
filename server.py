@@ -43,7 +43,7 @@ FALLBACK_MODELS = {"claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "clau
 HAS_KEY = bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
 client = anthropic.Anthropic(timeout=60.0) if HAS_KEY else None
 
-SYSTEM = """너는 소개팅 주선자야. 사용자가 만든 '매칭 로직'의 점수 결과를 보고, 따뜻하고 구체적인 한국어로 말해.
+SYSTEM = """너는 소개팅 주선자야. 소개팅 앱 '이유있는 설렘'에서 사용자가 정한 이상형 기준의 점수 결과를 보고, 따뜻하고 구체적인 한국어로 말해.
 - 점수표에 있는 사실(겹치는 관심사, MBTI, 성향, 나이 차 등)만 근거로 써. 없는 정보를 지어내지 마.
 - 외모·연봉·종교를 깎아내리는 표현은 쓰지 마.
 - 반말 말고 부드러운 존댓말로."""

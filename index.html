@@ -3,26 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>소개팅 매칭 로직</title>
-<link rel="stylesheet" href="common.css?v=11">
+<title>이유있는 설렘 — 설렘에도 이유가 있어요</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="common.css?v=14">
 </head>
 <body>
 <div class="topbar"><div class="tb-in">
-  <a class="brand" href="#top">💘 매칭 로직</a>
-  <nav class="steps" id="steps"><a href="#s1" data-go="1"><i>1</i>올린다</a><a href="#s2" data-go="2"><i>2</i>내 로직</a><a href="#s3" data-go="3"><i>3</i>오늘의 소개</a><a href="#s4" data-go="4"><i>4</i>추천 이유</a></nav>
-  <button id="openFriend" class="topbtn" title="친구 프로필을 별도 창에서 입력해요">친구 대신 올리기 ↗ <span id="friendCnt" class="fc"></span></button>
+  <a class="brand" href="#top">💘 이유있는 설렘</a>
+  <nav class="steps" id="steps"><a href="#s1" data-go="1"><i>1</i>프로필 설정</a><a href="#s2" data-go="2"><i>2</i>이상형 설정</a><a href="#s3" data-go="3"><i>3</i>오늘의 인연</a><a href="#s4" data-go="4"><i>4</i>케미 리포트</a></nav>
+  <button id="openFriend" class="topbtn" title="친구 프로필을 새 창에서 소개해요">친구 소개하기 ↗ <span id="friendCnt" class="fc"></span></button>
 </div></div>
 
 <header id="top" class="hero">
-  <div class="eyebrow">바이브코딩 실습 4 · 소개팅 매칭</div>
-  <h1>가장 잘 맞는 상대를 찾아줍니다</h1>
-  <p>소개팅 앱이 아니라 <b>매칭 로직</b>입니다. 조건과 MBTI·성향으로 점수를 매기고, 추천 상대와 그 사람을 고른 <b>내 로직</b>을 화면에 보여줍니다.</p>
+  <div class="eyebrow">✨ 오늘도 설레는 케미 찾기</div>
+  <h1>내 기준으로 찾는, 진짜 잘 맞는 사람</h1>
+  <p>조건·MBTI·연애 성향으로 <b>케미 점수</b>를 매기고, 누가 왜 나와 잘 맞는지 <b>근거까지</b> 보여드려요. 이상형 기준은 내가 직접 정해요.</p>
 </header>
 
 <main>
-<!-- ① 올린다 -->
+<!-- ① 프로필 설정 -->
 <section id="s1">
-  <div class="sec-head"><h2><span class="num">1</span>올린다</h2><p>프로필과 성향 질문을 채우면 오른쪽에 내 성향이 나와요</p></div>
+  <div class="sec-head"><h2><span class="num">1</span>프로필 설정</h2><p>나를 소개하고 연애 성향 질문에 답하면, 오른쪽에 나의 연애 유형이 나와요</p></div>
   <div class="s1grid">
     <div class="card hl">
       <div class="card-head"><h3>내 프로필</h3>
@@ -31,27 +32,27 @@
       <div id="meForm" class="tabbed" data-show="basic"></div>
     </div>
     <div class="card sidecard">
-      <h3>내 성향 결과</h3>
+      <h3>나의 연애 유형</h3>
       <div id="myType"></div>
     </div>
   </div>
   <details class="card fold">
-    <summary><h3>프로필 저장소 <span id="cnt" class="muted"></span></h3></summary>
+    <summary><h3>프로필 보관함 <span id="cnt" class="muted"></span></h3></summary>
     <div class="row" style="margin-top:12px">
-      <button class="ghost" id="addMeBtn" title="나 자신이 추천에서 빠지는지 확인용">내 프로필도 저장소에 넣어보기</button>
+      <button class="ghost" id="addMeBtn" title="나 자신이 추천에서 빠지는지 확인용">내 프로필도 보관함에 넣어보기</button>
       <button class="ghost" id="resetBtn">가상 프로필로 초기화</button>
     </div>
     <div id="store" class="store"></div>
   </details>
-  <div class="stepnav"><span></span><button data-go="2">다음: ② 내 로직 만들기 →</button></div>
+  <div class="stepnav"><span></span><button data-go="2">다음: ② 이상형 설정 →</button></div>
 </section>
 
-<!-- ② 내 로직 -->
+<!-- ② 이상형 설정 -->
 <section id="s2">
-  <div class="sec-head"><h2><span class="num">2</span>내 로직을 만든다</h2><p>숫자를 바꾸면 추천 결과가 바로 바뀌어요</p></div>
+  <div class="sec-head"><h2><span class="num">2</span>이상형 설정</h2><p>나만의 기준을 정해요 — 숫자를 바꾸면 추천이 바로 달라져요</p></div>
   <div class="logicgrid" id="logic">
     <div class="card a-filter">
-      <h3>① 거르기 <span class="muted small">절대 안 되는 조건</span></h3>
+      <h3>🚫 이건 절대 안 돼요 <span class="muted small">하나라도 걸리면 제외</span></h3>
       <div class="rule"><span>원하는 성별</span><select data-s="wantGender" style="width:110px"><option>여</option><option>남</option><option>상관없음</option></select></div>
       <div class="rule"><span>나이 범위</span><span><input class="sm" type="number" data-s="ageMin"> ~ <input class="sm" type="number" data-s="ageMax"> 세</span></div>
       <div class="rule"><span>최소 키 <span class="muted small">(0 = 상관없음)</span></span><span><input class="sm" type="number" data-s="minHeight"> cm</span></div>
@@ -61,7 +62,7 @@
     </div>
 
     <div class="card a-score">
-      <h3>② 점수 <span class="muted small">무엇이 같으면 몇 점?</span></h3>
+      <h3>💯 이런 점이 좋아요 <span class="muted small">항목별 케미 점수</span></h3>
       <table>
         <tr><th>항목</th><th>기준</th><th style="text-align:right">점수</th></tr>
         <tr><td>관심사</td><td>겹치는 관심사 1개당<br><span class="small muted">최대 <input class="sm" type="number" data-w="interestMax" min="1"> 개까지</span></td><td class="pt"><input class="sm" type="number" data-w="interest"></td></tr>
@@ -79,7 +80,7 @@
     </div>
 
     <div class="card a-reason">
-      <h3>③ 이유 <span class="muted small">왜 이 사람이 1위인가?</span></h3>
+      <h3>🏆 순위 규칙 <span class="muted small">누가 1위가 될까?</span></h3>
       <div class="rule"><span>순위 기준</span><select data-s="rankBy" style="width:auto">
         <option value="mutual">서로 맞는 정도 (쌍방)</option><option value="mine">내 점수만</option></select></div>
       <div class="rule"><span>매칭 성사 기준<br><span class="small muted">상대가 나를 보는 점수</span></span><span><input class="sm" type="number" data-s="matchCut"> % 이상</span></div>
@@ -105,37 +106,37 @@
     <p class="small muted" style="margin-bottom:0">국내 커뮤니티에서 널리 공유되는 MBTI 궁합표(원본 출처 불명)를 숫자로 옮긴 것입니다. 재미용 기준이고 과학적 근거는 없어요. 내 MBTI 줄이 강조되어 있어요.</p>
   </details>
   <div class="donebar">
-    <div><b>내 로직을 다 만들었나요?</b><span id="doneHint">완성하면 이 로직으로 오늘의 소개가 시작돼요</span></div>
-    <button id="logicDone">✔ 로직 완성 → 오늘의 소개 받기</button>
+    <div><b>이상형 설정을 마쳤나요?</b><span id="doneHint">완료하면 이 기준으로 오늘의 인연을 소개해 드려요</span></div>
+    <button id="logicDone">✔ 설정 완료 → 오늘의 인연 만나기</button>
   </div>
-  <div class="stepnav"><button class="ghost" data-go="1">← 이전: ① 올린다</button><button class="ghost" data-go="3">③ 오늘의 소개 →</button></div>
+  <div class="stepnav"><button class="ghost" data-go="1">← 이전: ① 프로필 설정</button><button class="ghost" data-go="3">③ 오늘의 인연 →</button></div>
 </section>
 
-<!-- ③ 오늘의 소개 -->
+<!-- ③ 오늘의 인연 -->
 <section id="s3">
-  <div class="sec-head"><h2><span class="num">3</span>오늘의 소개</h2><p>잘 맞는 사람과 가장 안 맞는 사람을 나란히 — 💌 매칭 요청을 보내고 상대가 수락하면 연락할 수 있어요</p></div>
+  <div class="sec-head"><h2><span class="num">3</span>오늘의 인연</h2><p>찰떡 케미와 정반대 케미를 나란히 — 💌 매칭 요청을 보내고, 상대가 수락하면 연락할 수 있어요</p></div>
   <div class="s3grid">
     <div class="card deckwrap best">
-      <div class="row" style="justify-content:space-between"><h3 style="margin:0">💘 가장 잘 맞는 사람</h3><span id="leftBest" class="small muted"></span></div>
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">💘 찰떡 케미</h3><span id="leftBest" class="small muted"></span></div>
       <div id="deckBest" style="margin-top:12px"></div>
     </div>
     <div class="card deckwrap worst">
-      <div class="row" style="justify-content:space-between"><h3 style="margin:0">💀 가장 안 맞는 사람</h3><span id="leftWorst" class="small muted"></span></div>
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">🧊 정반대 케미</h3><span id="leftWorst" class="small muted"></span></div>
       <div id="deckWorst" style="margin-top:12px"></div>
     </div>
   </div>
   <div id="matches" style="margin-top:16px"></div>
-  <div class="stepnav"><button class="ghost" data-go="2">← 이전: ② 내 로직</button><button data-go="4">다음: ④ 추천 이유 보기 →</button></div>
+  <div class="stepnav"><button class="ghost" data-go="2">← 이전: ② 이상형 설정</button><button data-go="4">다음: ④ 케미 리포트 보기 →</button></div>
 </section>
 
-<!-- ④ 추천하고, 보여준다 -->
+<!-- ④ 케미 리포트 -->
 <section id="s4">
-  <div class="sec-head"><h2><span class="num">4</span>추천하고, 보여준다</h2><p>누구를 왜 1위로 골랐는지 화면이 말해줍니다</p></div>
+  <div class="sec-head"><h2><span class="num">4</span>케미 리포트</h2><p>누구와 왜 가장 잘 맞는지, 점수와 근거까지 정리했어요</p></div>
   <div id="result"></div>
-  <div class="stepnav"><button class="ghost" data-go="3">← 이전: ③ 오늘의 소개</button><button class="ghost" data-go="1">처음으로 ↺</button></div>
+  <div class="stepnav"><button class="ghost" data-go="3">← 이전: ③ 오늘의 인연</button><button class="ghost" data-go="1">처음으로 ↺</button></div>
 </section>
 </main>
-<footer>바이브코딩 · 소개팅 매칭 실습 4 — 데이터는 이 브라우저에만 저장됩니다</footer>
+<footer>이유있는 설렘 · 바이브코딩 실습 4 — 입력한 정보는 이 브라우저에만 저장돼요</footer>
 
 <script src="common.js?v=9"></script>
 <script>
@@ -265,7 +266,7 @@ $('addMeBtn').onclick = () => {
   save(); render();
 };
 $('resetBtn').onclick = () => {
-  if (!confirm('저장소를 가상 프로필 24명으로 되돌릴까요? (내가 추가한 프로필은 지워집니다)')) return;
+  if (!confirm('보관함을 가상 프로필 24명으로 되돌릴까요? (내가 추가한 프로필은 지워져요)')) return;
   st.profiles = JSON.parse(JSON.stringify(SAMPLE));
   save(); render();
 };
@@ -416,39 +417,38 @@ function compute() {
   return { passed, dropped };
 }
 
-// ③ 이유: 1위가 왜 1위인지 문장으로 만든다
-function explain(passed, max) {
-  const a = passed[0], b = passed[1], lines = [];
+// ③ 이유: 1위가 왜 1위인지 — 한 줄 결론 + 항목별 칩으로 요약하고, 계산식은 맨 아래에 작게
+const chip = (it, pts, cls = 'got') => `<span class="${cls}" title="${esc(it.detail)}">${it.label} ${pts}</span>`;
+const whyRow = (label, body) => body ? `<div class="whyrow"><span class="whylbl">${label}</span><div>${body}</div></div>` : '';
+function explainHTML(passed, max) {
+  const a = passed[0], b = passed[1], mm = mutualMode(), unit = mm ? '%' : '점', nm = esc(a.p.name);
   const got = a.items.filter(i => i.pts > 0).sort((x, y) => y.pts - x.pts);
-  const mm = mutualMode(), unit = mm ? '%' : '점';
-  if (mm) lines.push(`<b>${esc(a.p.name)}</b>님은 <b>서로 맞는 정도 ${a.mutual}%</b>로, 조건을 통과한 ${passed.length}명 중 가장 높습니다.
-    (내가 보는 점수 ${a.total}/${max}점 = ${a.minePct}%, 상대가 나를 보는 점수 ${a.their.pct}% → √(${a.minePct}×${a.their.pct}) = ${a.mutual}%)`);
-  else lines.push(`<b>${esc(a.p.name)}</b>님은 ${max}점 만점에 <b>${a.total}점</b>으로, 조건을 통과한 ${passed.length}명 중 가장 높습니다.`);
-  if (got.length) lines.push(`내 점수표에서 받은 곳: ${got.map(i => `${i.label} <b>+${i.pts}</b> (${esc(i.detail)})`).join(', ')}`);
-  if (mm) lines.push(`상대가 나를 볼 때: ${a.their.items.map(i => `${i.label} +${i.pts} (${esc(i.detail)})`).join(', ')}`);
-  if (!b) {
-    lines.push(`거르기 조건을 통과한 사람이 ${esc(a.p.name)}님 한 명뿐이라 비교 대상이 없습니다.`);
-  } else if (rankVal(a) > rankVal(b)) {
+  const zero = a.items.filter(i => i.pts === 0);
+  const lead = mm ? `${nm}님은 서로 맞는 정도 <b>${a.mutual}%</b>로, 조건을 통과한 ${passed.length}명 중 가장 높아요.`
+    : `${nm}님은 ${max}점 만점에 <b>${a.total}점</b>으로, 조건을 통과한 ${passed.length}명 중 가장 높아요.`;
+
+  // 2위와의 차이
+  let vs = '';
+  if (!b) vs = `<span class="muted">통과한 사람이 ${nm}님 한 명뿐이라 비교 대상이 없어요</span>`;
+  else if (rankVal(a) > rankVal(b)) {
     const adv = a.items.map((it, k) => ({ it, d: it.pts - b.items[k].pts })).filter(x => x.d > 0).sort((x, y) => y.d - x.d);
-    if (mm) {
-      lines.push(`2위 ${esc(b.p.name)}님(서로 ${b.mutual}%)보다 <b>${a.mutual - b.mutual}%p</b> 앞섭니다 — 내 점수 ${a.minePct}% vs ${b.minePct}%, 상대 점수 ${a.their.pct}% vs ${b.their.pct}%`);
-      const tAdv = a.their.items.map((it, k) => ({ it, d: it.pts - b.their.items[k].pts })).filter(x => x.d > 0);
-      if (tAdv.length) lines.push(`상대 쪽 점수에서 앞선 곳: ` + tAdv.map(x => `${x.it.label} ${esc(x.it.detail)} (<b>+${x.d}</b>)`).join(', '));
-      if (adv.length) lines.push(`내 점수표에서 앞선 곳: ` + adv.map(x => `${x.it.label} ${esc(x.it.detail)} (<b>+${x.d}</b>)`).join(', '));
-    } else lines.push(`2위 ${esc(b.p.name)}님(${b.total}점)보다 <b>${a.total - b.total}점</b> 앞선 결정적 차이: ` +
-      adv.map(x => `${x.it.label} ${esc(x.it.detail)} (<b>+${x.d}</b>)`).join(', '));
-    const back = a.items.map((it, k) => ({ it, d: b.items[k].pts - it.pts })).filter(x => x.d > 0);
-    if (back.length) lines.push(`반대로 ${esc(b.p.name)}님이 더 높았던 곳: ` + back.map(x => `${x.it.label} ${esc(b.items[a.items.indexOf(x.it)].detail)} (+${x.d})`).join(', '));
+    const tAdv = mm ? a.their.items.map((it, k) => ({ it, d: it.pts - b.their.items[k].pts })).filter(x => x.d > 0) : [];
+    vs = `2위 ${esc(b.p.name)}님보다 <b>+${rankVal(a) - rankVal(b)}${mm ? '%p' : '점'}</b>
+      <div class="bd" style="margin-top:4px">${adv.slice(0, 4).map(x => chip(x.it, '+' + x.d)).join('')}${tAdv.map(x => chip({ ...x.it, label: '상대 ' + x.it.label }, '+' + x.d)).join('')}</div>`;
   } else {
-    let why;
-    if (a.common !== b.common) why = `동점 규칙 1번 — 겹치는 관심사가 ${a.common}개로 ${esc(b.p.name)}님(${b.common}개)보다 많습니다.`;
-    else if (a.ageDiff !== b.ageDiff) why = `동점 규칙 2번 — 나이 차가 ${a.ageDiff}살로 ${esc(b.p.name)}님(${b.ageDiff}살)보다 적습니다.`;
-    else why = `동점 규칙 3번 — 모든 조건이 같아 이름 가나다순으로 앞섭니다.`;
-    lines.push(`2위 ${esc(b.p.name)}님과 ${rankVal(a)}${unit} 동점이지만, ${why}`);
+    const why = a.common !== b.common ? `겹치는 관심사가 ${a.common}개로 더 많아요 (2위 ${b.common}개)`
+      : a.ageDiff !== b.ageDiff ? `나이 차가 ${a.ageDiff}살로 더 적어요 (2위 ${b.ageDiff}살)` : '모든 조건이 같아 이름 가나다순';
+    vs = `2위 ${esc(b.p.name)}님과 ${rankVal(a)}${unit} 동점 → 동점 규칙: ${why}`;
   }
-  const miss = a.items.filter(i => i.pts < i.max);
-  if (miss.length) lines.push(`아쉬운 점: ${miss.map(i => `${i.label} (${esc(i.detail)})`).join(', ')}`);
-  return lines;
+
+  const calc = mm ? `내가 보는 점수 ${a.total}/${max}점(${a.minePct}%) × 상대가 나를 보는 점수 ${a.their.pct}% → √(${a.minePct}×${a.their.pct}) = ${a.mutual}%`
+    : `${got.map(i => `${i.label} ${i.pts}`).join(' + ')} = ${a.total}점`;
+  return `<p class="whylead">${lead}</p>
+    ${whyRow('🏆 2위와 차이', vs)}
+    ${whyRow('✅ 점수 받은 곳', `<div class="bd">${got.map(i => chip(i, '+' + i.pts)).join('')}</div>`)}
+    ${mm ? whyRow('💌 상대가 볼 때', `<div class="bd">${a.their.items.map(i => chip(i, '+' + i.pts, i.pts ? 'got' : '')).join('')}</div>`) : ''}
+    ${zero.length ? whyRow('🤏 아쉬운 점', `<div class="bd">${zero.map(i => chip(i, '0', '')).join('')}</div>`) : ''}
+    <p class="small muted" style="margin:10px 0 0">계산식: ${calc} · 칩에 마우스를 올리면 근거가 보여요</p>`;
 }
 
 /* ---------- 화면 그리기 ---------- */
@@ -496,9 +496,9 @@ function render() {
   }).join('');
 
   let html = `<div class="summary">
-    <span class="pill">저장소 <b>${st.profiles.length}</b>명</span><span class="muted">→ ① 거르기 →</span>
-    <span class="pill">통과 <b>${passed.length}</b>명 · 제외 ${dropped.length}명</span><span class="muted">→ ② 점수 순 →</span>
-    <span class="pill">추천 1위 <b>${passed[0] ? esc(passed[0].p.name) : '없음'}</b></span></div>`;
+    <span class="pill">보관함 <b>${st.profiles.length}</b>명</span><span class="muted">→ 이상형 필터 →</span>
+    <span class="pill">통과 <b>${passed.length}</b>명 · 제외 ${dropped.length}명</span><span class="muted">→ 케미 점수 순 →</span>
+    <span class="pill">케미 1위 <b>${passed[0] ? esc(passed[0].p.name) : '없음'}</b></span></div>`;
 
   if (!passed.length) {
     const cnt = {};
@@ -506,14 +506,14 @@ function render() {
     const names = { gender: '성별', age: '나이 범위', height: '최소 키', smoke: '흡연자 제외', religion: '같은 종교만', pass: '내가 패스함' };
     const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
     html += `<div class="empty"><h3>조건에 맞는 사람이 0명입니다</h3>
-      <p>모든 프로필이 ① 거르기 조건에 걸렸어요.</p>
+      <p>모든 프로필이 '절대 안 돼요' 조건에 걸렸어요.</p>
       ${top.length ? `<p>가장 많이 걸린 조건: ${top.map(([k, v]) => `<b>${names[k]}</b> ${v}명`).join(', ')}</p>
-      <p class="muted">② 내 로직에서 이 조건을 조금 완화해 보세요.</p>` : '<p class="muted">저장소에 프로필을 먼저 올려주세요.</p>'}</div>`;
+      <p class="muted">② 이상형 설정에서 이 조건을 조금 완화해 보세요.</p>` : '<p class="muted">보관함에 프로필을 먼저 추가해 주세요.</p>'}</div>`;
   } else {
     const a = passed[0];
     html += `<div class="winner">
       <div class="top">
-        <div><div class="small muted">추천 1위</div><div class="name">${esc(a.p.name)}</div>
+        <div><div class="small muted">💘 오늘의 베스트 케미</div><div class="name">${esc(a.p.name)}</div>
           <div class="muted">${a.p.gender}·${a.p.age}세·${a.p.height}cm · ${a.p.region} · ${a.p.style} · ${a.p.interests.map(esc).join('·')}</div>
           <div style="color:var(--lime)">${esc(mbtiText(a.p))} · ${traitText(a.p)} — 성향 궁합 ${a.traitPts}/${traitMax(st.S)}점</div>
           ${a.p.intro ? `<div style="margin-top:4px">“${esc(a.p.intro)}”</div>` : ''}
@@ -523,8 +523,10 @@ function render() {
           : `<div class="score">${a.total}<small> / ${max}점</small></div>`}
       </div>
       ${aiExplainHTML(passed)}
-      <div class="why"><h4>왜 이 사람이 1위인가? <span class="small muted">(내 로직 계산)</span></h4><ul>${explain(passed, max).map(l => `<li>${l}</li>`).join('')}</ul></div>
-      <div class="ok-line">✔ 1위의 이유를 화면이 말해줍니다</div>
+      <details class="why" id="whyBox" ${document.getElementById('whyBox')?.open ? 'open' : ''}>
+        <summary><span class="whybtn">📋 왜 이 사람이 1위일까? <span class="small">— 케미 점수 근거 보기</span></span></summary>
+        ${explainHTML(passed, max)}</details>
+      <div class="ok-line">✔ 내가 정한 이상형 기준으로 계산한 결과예요</div>
     </div>`;
 
     html += '<div class="grid2">';
@@ -550,7 +552,7 @@ function render() {
   }
 
   if (dropped.length) {
-    html += `<details class="card fold" id="dropBox" ${document.getElementById('dropBox')?.open ? 'open' : ''}><summary><h3>① 거르기에서 제외된 사람 <span class="muted">${dropped.length}명</span></h3></summary>` +
+    html += `<details class="card fold" id="dropBox" ${document.getElementById('dropBox')?.open ? 'open' : ''}><summary><h3>이상형 필터에서 제외된 사람 <span class="muted">${dropped.length}명</span></h3></summary>` +
       dropped.map(d => `<div class="drop"><b>${esc(d.p.name)}</b><span class="r">${d.r.map(r => esc(r.text)).join(' · ')}</span>
         ${st.likes[d.p.id] === 'pass' ? `<button class="x" data-unpass="${esc(d.p.id)}">패스 취소</button>` : ''}</div>`).join('') + `</details>`;
   }
@@ -641,11 +643,11 @@ $('logicDone').onclick = () => {
 let last = { best: null, worst: null };   // 각 카드에서 방금 요청 보낸 사람
 const gauge = (label, v, cls) => `<div class="gauge"><span>${label}</span><div class="bar"><i class="${cls}" style="width:${v}%"></i></div><b>${v}%</b></div>`;
 function renderDeck(passed) {
-  $('logicDone').textContent = st.logicDone ? '↻ 바뀐 로직으로 오늘의 소개 다시 받기' : '✔ 로직 완성 → 오늘의 소개 받기';
-  $('doneHint').textContent = st.logicDone ? '로직을 고쳤다면 다시 눌러 처음부터 소개받아요' : '완성하면 이 로직으로 오늘의 소개가 시작돼요';
+  $('logicDone').textContent = st.logicDone ? '↻ 바뀐 기준으로 다시 소개받기' : '✔ 설정 완료 → 오늘의 인연 만나기';
+  $('doneHint').textContent = st.logicDone ? '기준을 고쳤다면 다시 눌러 처음부터 소개받아요' : '완료하면 이 기준으로 오늘의 인연을 소개해 드려요';
   if (!st.logicDone) {
-    const lock = `<div class="dresult locked"><div class="big">🔒 아직 잠겨 있어요</div>
-      <p>② 내 로직을 다 만들고 <b>로직 완성</b>을 누르면 열려요.</p><a class="nextlink" href="#s2" data-go="2">② 내 로직 만들러 가기 →</a></div>`;
+    const lock = `<div class="dresult locked"><div class="big">🔒 아직 열리지 않았어요</div>
+      <p>② 이상형 설정을 마치고 <b>설정 완료</b>를 누르면 오늘의 인연이 도착해요.</p><a class="nextlink" href="#s2" data-go="2">② 이상형 설정하러 가기 →</a></div>`;
     $('deckBest').innerHTML = $('deckWorst').innerHTML = lock;
     $('leftBest').textContent = $('leftWorst').textContent = '';
     $('matches').innerHTML = `<div class="card"><h3>📬 매칭 요청함</h3><p class="muted small" style="margin:0">오늘의 소개에서 💌 매칭 요청을 보내면 여기에 쌓여요.</p></div>`;
@@ -683,16 +685,16 @@ function renderOne(kind, order, passed) {
 
   if (!queue.length) {
     const mine = Object.entries(st.reqFrom || {}).filter(([id, k]) => k === kind && st.likes[id] === 'like').map(([id]) => passed.find(x => x.p.id === id)).filter(Boolean);
-    el.innerHTML = `<div class="dresult"><div class="big">${passed.length ? (kind === 'best' ? '잘 맞는' : '안 맞는') + ' 쪽 소개를 모두 봤어요' : '소개할 사람이 없어요'}</div>
+    el.innerHTML = `<div class="dresult"><div class="big">${passed.length ? (kind === 'best' ? '찰떡 케미' : '정반대 케미') + ' 쪽 인연을 모두 만났어요' : '오늘은 소개할 인연이 없어요'}</div>
       <p>이쪽에서 보낸 요청 ${mine.length}개 · 수락 <b>${mine.filter(x => reqState(x) === 'accepted').length}명</b></p>
-      ${passed.length ? '<button data-restart style="width:100%">처음부터 다시 보기</button>' : '<p class="small muted">② 거르기 조건을 완화하거나 친구 프로필을 올려주세요.</p>'}</div>`;
+      ${passed.length ? '<button data-restart style="width:100%">처음부터 다시 보기</button>' : '<p class="small muted">② 이상형 필터를 완화하거나 친구를 소개해 주세요.</p>'}</div>`;
     return;
   }
 
   const x = queue[0], p = x.p, my = st.me.interests, rank = passed.indexOf(x) + 1, fromEnd = passed.length - rank + 1;
   const bad = kind === 'worst', zero = x.items.filter(i => i.pts === 0);
   el.innerHTML = `<div class="dcard">
-    ${bad ? `<div class="rankpill bad">내 로직 꼴찌${fromEnd > 1 ? `에서 ${fromEnd}번째` : ''} · ${rank}위</div>` : `<div class="rankpill">내 로직 ${rank}위</div>`}
+    ${bad ? `<div class="rankpill bad">케미 꼴찌${fromEnd > 1 ? `에서 ${fromEnd}번째` : ''} · ${rank}위</div>` : `<div class="rankpill">케미 ${rank}위</div>`}
     <div class="dtop"><div><div class="dname">${esc(p.name)} <span>${p.age}</span></div>
       <div class="small muted">${p.region} · ${p.height}cm · ${p.style} · ${p.smoke ? '흡연' : '비흡연'} · 술 ${p.drink}</div></div>
       <div class="dpct ${bad ? 'bad' : ''}">${x.mutual}%<small>서로 맞는 정도</small></div></div>

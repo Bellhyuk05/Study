@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>친구 프로필 등록</title>
-<link rel="stylesheet" href="common.css?v=9">
+<title>친구 소개하기 — 이유있는 설렘</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="common.css?v=14">
 </head>
 <body>
 <header>
-  <h1>친구 프로필 대신 올려주기</h1>
-  <p>여기서 입력한 친구는 <b>프로필 저장소</b>에 들어가고, 메인 화면의 추천 결과에 바로 반영돼요.</p>
+  <h1>내 친구를 소개해요 🤝</h1>
+  <p>여기서 소개한 친구는 <b>프로필 보관함</b>에 들어가고, 메인 화면의 케미 추천에 바로 반영돼요.</p>
 </header>
 <main>
   <section style="margin-top:16px">
@@ -18,13 +19,13 @@
       <div id="addForm"></div>
       <div id="preview" class="mytype"></div>
       <div class="row" style="margin-top:12px">
-        <button id="addBtn">저장소에 추가</button>
+        <button id="addBtn">보관함에 추가</button>
         <button class="ghost" id="closeBtn">창 닫기</button>
         <span id="addMsg" class="small"></span>
       </div>
     </div>
     <div class="card" style="margin-top:16px">
-      <h3>내가 대신 올려준 친구 <span id="cnt" class="muted"></span></h3>
+      <h3>내가 소개한 친구 <span id="cnt" class="muted"></span></h3>
       <div id="list" class="store" style="margin-top:0"></div>
     </div>
   </section>
@@ -73,7 +74,7 @@ $('addBtn').onclick = () => {
   st.profiles.push({ ...p, id: 'u' + Date.now(), byFriend: true });
   save(); tellMain(); renderList();
   fillForm('add', { ...BLANK, gender: p.gender, matchmaker: p.matchmaker }); preview();
-  msg(`${p.name}님을 저장소에 추가했어요`);
+  msg(`${p.name}님을 보관함에 추가했어요`);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 $('list').addEventListener('click', e => {
